@@ -1,19 +1,11 @@
 using UnityEngine;
 using System.Collections;
 
-public class CCDirectorMac : MonoBehaviour
-{
 
-	// Use this for initialization
-	void Start ()
+namespace BBGamelib{
+	public class CCDirectorMac : CCDirector
 	{
-	
-	}
-	
-	// Update is called once per frame
-	void Update ()
-	{
-	
+		
 	}
 }
 

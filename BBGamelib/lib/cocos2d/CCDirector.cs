@@ -185,7 +185,7 @@ namespace BBGamelib{
 		public static void Reset(){
 			_sharedDirector = null;
 		}
-		CCDirector()
+		protected CCDirector()
 		{
 			CCDebug.Log("cocos2d: cocos2d-iphone v2.1");
 			// scenes

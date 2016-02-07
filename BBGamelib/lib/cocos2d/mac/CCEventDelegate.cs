@@ -1,19 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
-public class CCEventDelegate : MonoBehaviour
-{
-
-	// Use this for initialization
-	void Start ()
+namespace BBGamelib{
+	public interface CCEventDelegate
 	{
-	
-	}
-	
-	// Update is called once per frame
-	void Update ()
-	{
-	
 	}
 }
 

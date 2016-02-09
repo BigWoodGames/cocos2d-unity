@@ -177,7 +177,11 @@ namespace BBGamelib{
 		public static CCDirector sharedDirector{
 			get{
 				if(_sharedDirector == null){
+					#if UNITY_STANDALONE || UNITY_WEBGL
+					_sharedDirector = new CCDirectorMac();
+					#else
 					_sharedDirector = new CCDirector();
+					#endif
                 }
                 return _sharedDirector;
             }

@@ -2,7 +2,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-#if UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_WP8_1
 namespace BBGamelib{
 	#region mark TouchHandler
 	public class CCTouchHandler 
@@ -103,4 +102,3 @@ namespace BBGamelib{
 	}
 	#endregion
 }
-#endif

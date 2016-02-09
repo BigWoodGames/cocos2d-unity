@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-#if UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_WP8_1
 namespace BBGamelib{
 	public enum kCCTouchSelectorFlag
 	{
@@ -439,4 +438,3 @@ namespace BBGamelib{
 		}
 	}
 }
-#endif

@@ -9,14 +9,15 @@ namespace BBGamelib{
 		AllAtOnce,
 		OneByOne,
 	}
-	
-	#region mark Layer
-	public class CCLayer : CCNode, CCTouchAllAtOnceDelegate, CCTouchOneByOneDelegate
+
+	public class CCLayerBase : CCNode, CCTouchAllAtOnceDelegate, CCTouchOneByOneDelegate
 	{
 		protected bool _touchEnabled;
 		protected int _touchPriority;
 		protected kCCTouchesMode _touchMode;
 		protected bool _touchSwallow;
+
+		//NOT SUPPORTED YET
 //		BOOL _accelerometerEnabled;
 
 		protected override void init()
@@ -149,101 +150,170 @@ namespace BBGamelib{
 		public virtual void ccTouchesCancelled(HashSet<UITouch> touches){}
 		#endregion
 	}
-	#endregion
 	
-	#region mark CCLayerRGBA
-	/** CCLayerRGBA is a subclass of CCLayer that implements the CCRGBAProtocol protocol using a solid color as the background.
-
-	 All features from CCLayer are valid, plus the following new features that propagate into children that conform to the CCRGBAProtocol:
-	 - opacity
-	 - RGB colors
-	 @since 2.1
-	 */
-	public class CCLayerRGBA : CCLayer, CCRGBAProtocol
+	#if UNITY_STANDALONE || UNITY_WEBGL
+	public class CCLayer : CCLayerBase, CCKeyboardEventDelegate, CCMouseEventDelegate
 	{
-		byte		_displayedOpacity, _realOpacity;
-		Color32	_displayedColor, _realColor;
-		bool		_cascadeOpacityEnabled, _cascadeColorEnabled;
-	
+		bool	_mouseEnabled;
+		int		_mousePriority;
+		
+		bool	_keyboardEnabled;
+		int		_keyboardPriority;
 
-		protected override void init ()
+		protected override void init()
 		{
 			base.init ();
-			
-			_displayedOpacity = _realOpacity = 255;
-			_displayedColor = _realColor = Color.white;
-			this.cascadeOpacityEnabled = false;
-			this.cascadeColorEnabled = false;
+
+			_mouseEnabled = false;
+			_mousePriority = 0;
+			_keyboardEnabled = false;
+			_keyboardPriority = 0;
 		}
 
-		public bool cascadeOpacityEnabled{get{return _cascadeOpacityEnabled;} set{_cascadeOpacityEnabled=value;}}
-		public bool cascadeColorEnabled{get{return _cascadeColorEnabled;} set{_cascadeColorEnabled=value;}}
-		public bool opacityModifyRGB{get{return false;} set{}}
-		public byte opacity{
-			get{return _realOpacity;}
+		public override void onEnter ()
+		{
+			base.onEnter ();
+			CCEventDispatcher eventDispatcher = CCDirectorMac.sharedDirector.eventDispatcher;
 			
-			/** Override synthesized setOpacity to recurse items */
-			set{
-				_displayedOpacity = _realOpacity = value;
-				
-				if( _cascadeOpacityEnabled ) {
-					byte parentOpacity = 255;
-					if( _parent is CCRGBAProtocol && ((CCRGBAProtocol)_parent).cascadeOpacityEnabled)
-						parentOpacity = ((CCRGBAProtocol)_parent).displayedOpacity;
-					updateDisplayedOpacity(parentOpacity);
-				}		
-			}
+			if( _mouseEnabled )
+				eventDispatcher.addMouseDelegate(this, _mousePriority);
+			
+			if( _keyboardEnabled)
+				eventDispatcher.addKeyboardDelegate(this, _keyboardPriority);
 		}
 
-		public byte displayedOpacity{get{return _displayedOpacity;}}
-		public Color32 displayedColor{get{return _displayedColor;}}
-
-		public Color32 color{
-			get{return _realColor;}
-			set{
-				_displayedColor = _realColor = value;
-				
-				if( _cascadeColorEnabled ) {
-					Color32 parentColor = Color.white;
-					if( _parent is CCRGBAProtocol && ((CCRGBAProtocol)_parent).cascadeColorEnabled )
-						parentColor = ((CCRGBAProtocol)_parent).displayedColor;
-					updateDisplayedColor(parentColor);
-				}
-			}
-		} 
-
-		public void updateDisplayedOpacity(byte parentOpacity){
-			_displayedOpacity = (byte)(_realOpacity * parentOpacity/255.0f);
+		public override void onExit ()
+		{
+			CCEventDispatcher eventDispatcher = CCDirectorMac.sharedDirector.eventDispatcher;
+			if( _mouseEnabled )
+				eventDispatcher.removeMouseDelegate(this);
 			
-			if (_cascadeOpacityEnabled) {
+			if( _keyboardEnabled )
+				eventDispatcher.removeKeyboardDelegate(this);
+			base.onExit ();
+		}
 
-				var enumerator = _children.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					CCNode item = enumerator.Current;
-					if (item is CCRGBAProtocol) {
-						((CCRGBAProtocol)item).updateDisplayedOpacity(_displayedOpacity);
+		/** whether or not it will receive mouse events.
+
+		 Valid only on OS X. Not valid on iOS
+		 */
+		public virtual bool isMouseEnabled{
+			get{ return _mouseEnabled;}
+			set{
+				if( _mouseEnabled != value ) {
+					_mouseEnabled = value;
+					if( _isRunning) {
+						CCDirectorMac director = (CCDirectorMac)CCDirector.sharedDirector;
+						if( value )
+							director.eventDispatcher.addMouseDelegate(this, _mousePriority);
+						else {
+							director.eventDispatcher.removeMouseDelegate(this);
+						}
 					}
-				}
+				}	
+			}
+		}
+
+		/** priority of the mouse events. Default is 0 */
+		public virtual int mousePriority{
+			get{ return _mousePriority;}
+			set{
+				if( _mousePriority != value ) {
+					_mousePriority = value;
+					
+					if( _mouseEnabled) {
+						this.isMouseEnabled = false;
+						this.isMouseEnabled = true;
+					}
+				}			
+			}
+		}
+
+		
+		/** whether or not it will receive keyboard events.
+
+		 Valid only on OS X. Not valid on iOS
+		 */
+		public virtual bool isKeyboardEnabled{
+			get{ return _keyboardEnabled;}
+			set{
+				if( _keyboardEnabled != value ) {
+					_keyboardEnabled = value;
+					if( _isRunning) {
+						CCDirectorMac director = (CCDirectorMac)CCDirector.sharedDirector;
+						if( value )
+							director.eventDispatcher.addKeyboardDelegate(this, _keyboardPriority);
+						else {
+							director.eventDispatcher.removeKeyboardDelegate(this);
+						}
+					}
+				}	
+			}
+		}
+		/** Priority of keyboard events. Default is 0 */
+//		@property (nonatomic, assign) NSInteger keyboardPriority;
+		public virtual int keyboardPriority{
+			get{ return _keyboardPriority;}
+			set{
+				if( _keyboardPriority != value ) {
+					_keyboardPriority = value;
+					
+					if( _keyboardEnabled) {
+						this.isKeyboardEnabled = false;
+						this.isKeyboardEnabled = true;
+					}
+				}			
 			}
 		}
 		
-		public void updateDisplayedColor(Color32 parentColor){
-			_displayedColor.r = (byte)(_realColor.r * parentColor.r/255.0f);
-			_displayedColor.g = (byte)(_realColor.g * parentColor.g/255.0f);
-			_displayedColor.b = (byte)(_realColor.b * parentColor.b/255.0f);
-			
-			if (_cascadeColorEnabled) {
-
-				var enumerator = _children.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					CCNode item = enumerator.Current;
-					if (item is CCRGBAProtocol) {
-						((CCRGBAProtocol)item).updateDisplayedColor(_displayedColor);
-					}
-				}
-			}		
+		public virtual bool ccKeyDown(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccKeyUp(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccMouseDown(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccMouseUp(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccMouseMoved(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccMouseDragged(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccRightMouseDown(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccRightMouseDragged(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccRightMouseUp(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccOtherMouseDown(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccOtherMouseDragged(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccOtherMouseUp(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccScrollWheel(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccMouseEntered(NSEvent theEvent){
+			return true; 
+		}
+		public virtual bool ccMouseExited(NSEvent theEvent){
+			return true; 
 		}
 	}
-	#endregion
+	#else
+	public class CCLayer : CCLayerBase{}
+	#endif
 }
 

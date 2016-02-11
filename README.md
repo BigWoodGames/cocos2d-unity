@@ -27,7 +27,7 @@
  Add the following code to the class:
  
 ``` cs
-										using UnityEngine;
+									using UnityEngine;
                     using System.Collections;
                     using BBGamelib;
                     

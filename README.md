@@ -10,7 +10,7 @@
 
     >Unity 5 is required. Unity 5.1.2f1 is our recommended version.
 
-  ![alt text](http://www.bigwoodgames.com/web2.0/04/images/dev/step2.jpg "New Project")
+  ![alt text](http://www.bigwoodgames.com/web/images/dev/step2.jpg "New Project")
 
 3. Drag the **BBGamelib** folders into your **Assets** or **Assets/Plugins** path:
 
@@ -18,11 +18,11 @@
 
 4. Create a c# script **AppDelegate.cs** under **Assets/Scripts**.
 
-  ![alt text](http://www.bigwoodgames.com/web2.0/04/images/dev/step4.jpg "Add plugin")
+  ![alt text](http://www.bigwoodgames.com/web/images/dev/step4.jpg "Add plugin")
 
 5. Double click AppDelegate.cs script to open MonoDevelop.
 
-  ![alt text](http://www.bigwoodgames.com/web2.0/04/images/dev/step5.jpg "AppDelegate")
+  ![alt text](http://www.bigwoodgames.com/web/images/dev/step5.jpg "AppDelegate")
   
  Add the following code to the class:
  
@@ -85,11 +85,11 @@
 
 6. Create a empty **GameObject** under **Hierarchy**:
 
-  ![alt text](http://www.bigwoodgames.com/web2.0/04/images/dev/step6-1.jpg "GameObject")
+  ![alt text](http://www.bigwoodgames.com/web/images/dev/step6-1.jpg "GameObject")
   
   **Add Component** to the **GameObject**, and choose **Scripts > App Delegate**:
   
-  ![alt text](http://www.bigwoodgames.com/web2.0/04/images/dev/step6-2.jpg "GameObject")
+  ![alt text](http://www.bigwoodgames.com/web/images/dev/step6-2.jpg "GameObject")
  
 7. Create a c# script **HelloWorldLayer.cs** derived from **CCLayer** Add the following method to the class:
 
@@ -160,7 +160,7 @@
 
 That's it! You now can code your game like using cocos2d-objc in xcode!
 
-  ![alt text](http://www.bigwoodgames.com/web2.0/04/images/dev/step8.jpg "GameObject")
+  ![alt text](http://www.bigwoodgames.com/web/images/dev/step8.jpg "GameObject")
 .
 
 + [Framework Website](www.bigwoodgames.com/preview/developer.php)

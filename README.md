@@ -27,59 +27,59 @@
  Add the following code to the class:
  
 ``` cs
-									using UnityEngine;
-                    using System.Collections;
-                    using BBGamelib;
-                    
-                    public class AppDelegate : CCAppDelegate {
-                    	
-                        //It's expansive to create a component during runtime in Unity.  
-                        //So cocos2d-unity implements a components pool which created in editor mode. 
-                        public override void applicationRunOnceOnBuilding ()
-                        {
-                            base.applicationRunOnceOnBuilding ();
-                            
-                            //add components need to pool
-                            //set pool size of CCNode.
-                            _factory.generateNodeGearsInEditMode(1024);
-                            
-                            //set pool size of CCSprite
-                            _factory.generateSpriteGearsInEditMode(1024);
-                            
-                            //set poool size of CCLabel
-                            _factory.generateLabelGearsInEditMode(16);
-                        }
-                        
-                        //Same as you always do in xcode.  Called after the application loaded.
-                        public override void applicationDidFinishLaunching ()
-                        {
-                            //Set the resolution height.  Screen will autosize to fit the height. 
-                            //You can set different height for different devices.
-                            _window.setResolutionHeight (640);
-                            
-                            _view.setFrame (_window.bounds);
-                            CCDirector.Reset ();
-                            _director = CCDirector.sharedDirector;
-                            _director.displayError = true;
-                            _director.displayStats = true;
-                            _director.displayLink = this;
-                            _director.animationInterval = 1.0f / 60;
-                            _director.view = _view;
-                            _window.rootViewController = _director;
-                            
-                            //Set your scene
-                            _director.presentScene(HelloWorldLayer.Scene ());
-                        }
-                         
-                        //Called when application quit
-                        void OnApplicationQuit() {
-                        }
-                    
-                        //Called when application enter background or resume
-                        void OnApplicationPause(bool paused)
-                        {
-                        }
-                    }
+using UnityEngine;
+using System.Collections;
+using BBGamelib;
+
+public class AppDelegate : CCAppDelegate {
+	
+    //It's expansive to create a component during runtime in Unity.  
+    //So cocos2d-unity implements a components pool which created in editor mode. 
+    public override void applicationRunOnceOnBuilding ()
+    {
+        base.applicationRunOnceOnBuilding ();
+        
+        //add components need to pool
+        //set pool size of CCNode.
+        _factory.generateNodeGearsInEditMode(1024);
+        
+        //set pool size of CCSprite
+        _factory.generateSpriteGearsInEditMode(1024);
+        
+        //set poool size of CCLabel
+        _factory.generateLabelGearsInEditMode(16);
+    }
+    
+    //Same as you always do in xcode.  Called after the application loaded.
+    public override void applicationDidFinishLaunching ()
+    {
+        //Set the resolution height.  Screen will autosize to fit the height. 
+        //You can set different height for different devices.
+        _window.setResolutionHeight (640);
+        
+        _view.setFrame (_window.bounds);
+        CCDirector.Reset ();
+        _director = CCDirector.sharedDirector;
+        _director.displayError = true;
+        _director.displayStats = true;
+        _director.displayLink = this;
+        _director.animationInterval = 1.0f / 60;
+        _director.view = _view;
+        _window.rootViewController = _director;
+        
+        //Set your scene
+        _director.presentScene(HelloWorldLayer.Scene ());
+    }
+     
+    //Called when application quit
+    void OnApplicationQuit() {
+    }
+
+    //Called when application enter background or resume
+    void OnApplicationPause(bool paused)
+    {
+    }
+}
 			
 ```
 

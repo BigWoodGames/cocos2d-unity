@@ -14,7 +14,7 @@
 
 3. Drag the **BBGamelib** folders into your **Assets** or **Assets/Plugins** path:
 
-  ![alt text](http://www.bigwoodgames.com/web2.0/04/images/dev/step3.jpg "Add plugin")
+  ![alt text](http://www.bigwoodgames.com/web/images/dev/step3.jpg "Add plugin")
 
 4. Create a c# script **AppDelegate.cs** under **Assets/Scripts**.
 

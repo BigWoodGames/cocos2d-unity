@@ -201,17 +201,7 @@ namespace BBGamelib{
 				}
 			}
 			//Keybaord Events
-			{
-				NSEvent keyEvt = getKeyboardDownEvent();
-				if(keyEvt != null){
-					_rootViewController.view.keyDown(keyEvt);
-				}else{
-					keyEvt = getKeyboardUpEvent();
-					if(keyEvt != null){
-						_rootViewController.view.keyUp(keyEvt);
-					}
-				}
-			}
+			keyboardEvent();
 
 			#endif
 		}
@@ -221,39 +211,30 @@ namespace BBGamelib{
 			nsevent.mouseLocation = Camera.main.ScreenToWorldPoint(Input.mousePosition) * PIXEL_PER_UNIT;
 			return nsevent;
 		}
-		NSEvent getKeyboardDownEvent(){
-			KeyCode keyCode = KeyCode.None;
+		void keyboardEvent(){
 			var keyCodeEnu = Enum.GetValues (typeof(KeyCode)).GetEnumerator ();
 			while (keyCodeEnu.MoveNext()) {
 				KeyCode keyCodeTmp = (KeyCode)keyCodeEnu.Current;
+				if(keyCodeTmp == KeyCode.Mouse0 || 
+				   keyCodeTmp == KeyCode.Mouse1 ||
+				   keyCodeTmp == KeyCode.Mouse2 || 
+				   keyCodeTmp == KeyCode.Mouse3 ||
+				   keyCodeTmp == KeyCode.Mouse4 || 
+				   keyCodeTmp == KeyCode.Mouse5){
+					continue;
+				}
 				if(Input.GetKeyDown(keyCodeTmp)){
-					keyCode = keyCodeTmp;
-					break;
+					NSEvent evt = new NSEvent();
+					evt.keyCode = keyCodeTmp;
+					_rootViewController.view.keyDown(evt);
 				}
-			}
-			if (keyCode != KeyCode.None) {
-				NSEvent evt = new NSEvent();
-				evt.keyCode = keyCode;
-				return evt;
-			}
-			return null;
-		}
-		NSEvent getKeyboardUpEvent(){
-			KeyCode keyCode = KeyCode.None;
-			var keyCodeEnu = Enum.GetValues (typeof(KeyCode)).GetEnumerator ();
-			while (keyCodeEnu.MoveNext()) {
-				KeyCode keyCodeTmp = (KeyCode)keyCodeEnu.Current;
+
 				if(Input.GetKeyUp(keyCodeTmp)){
-					keyCode = keyCodeTmp;
-					break;
+					NSEvent evt = new NSEvent();
+					evt.keyCode = keyCodeTmp;
+					_rootViewController.view.keyUp(evt);
 				}
 			}
-			if (keyCode != KeyCode.None) {
-				NSEvent evt = new NSEvent();
-				evt.keyCode = keyCode;
-				return evt;
-			}
-			return null;
 		}
 		#endif
 

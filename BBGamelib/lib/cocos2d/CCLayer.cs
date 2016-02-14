@@ -267,49 +267,49 @@ namespace BBGamelib{
 		}
 		
 		public virtual bool ccKeyDown(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccKeyUp(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccMouseDown(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccMouseUp(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccMouseMoved(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccMouseDragged(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccRightMouseDown(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccRightMouseDragged(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccRightMouseUp(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccOtherMouseDown(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccOtherMouseDragged(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccOtherMouseUp(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccScrollWheel(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccMouseEntered(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 		public virtual bool ccMouseExited(NSEvent theEvent){
-			return true; 
+			return false; 
 		}
 	}
 	#else

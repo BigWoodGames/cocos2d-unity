@@ -12,7 +12,7 @@
 
   ![alt text](http://www.bigwoodgames.com/web/images/dev/step2.jpg "New Project")
 
-3. Drag the **BBGamelib** folders into your **Assets** or **Assets/Plugins** path:
+3. Drag the **BBGamelib** folders into your **Assets** path:
 
   ![alt text](http://www.bigwoodgames.com/web/images/dev/step3.jpg "Add plugin")
 

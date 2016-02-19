@@ -110,6 +110,7 @@ namespace BBGamelib{
 					}
 				} 
 			} else {
+//				#if UNITY_EDITOR
 				#if UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_WP8_1
 				if(Input.GetMouseButtonDown(0)){
 					UITouch uiTouch = new UITouch();
@@ -143,6 +144,7 @@ namespace BBGamelib{
 					hasTouchesMoved = true;
 				}
 				#endif
+//				#endif
 			}
 			if (hasTouchesBegan)
 				_rootViewController.view.touchesBegan (touchesBegan);

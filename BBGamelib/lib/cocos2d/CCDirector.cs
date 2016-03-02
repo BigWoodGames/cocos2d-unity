@@ -177,7 +177,11 @@ namespace BBGamelib{
 		public static CCDirector sharedDirector{
 			get{
 				if(_sharedDirector == null){
+					#if UNITY_STANDALONE || UNITY_WEBGL
+					_sharedDirector = new CCDirectorMac();
+					#else
 					_sharedDirector = new CCDirector();
+					#endif
                 }
                 return _sharedDirector;
             }
@@ -185,7 +189,7 @@ namespace BBGamelib{
 		public static void Reset(){
 			_sharedDirector = null;
 		}
-		CCDirector()
+		protected CCDirector()
 		{
 			CCDebug.Log("cocos2d: cocos2d-iphone v2.1");
 			// scenes

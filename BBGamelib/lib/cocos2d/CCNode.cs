@@ -1034,6 +1034,22 @@ namespace BBGamelib{
 			point = CCDirector.sharedDirector.convertToGL (point);
 			return convertToNodeSpaceAR(point);
 		}
+
+		
+		#if UNITY_STANDALONE || UNITY_WEBGL
+		public Vector2 convertMouseEventToNodeSpace(NSEvent evt)
+		{
+			Vector2 point = CCDirectorMac.sharedDirector.convertEventToGL (evt);
+			return convertToNodeSpace(point);
+		}
+		
+		public Vector2 convertMouseEventToNodeSpaceAR(NSEvent evt)
+		{
+			Vector2 point = CCDirectorMac.sharedDirector.convertEventToGL (evt);
+			return convertToNodeSpaceAR(point);
+		}
+		#endif
+
 		#endregion
 
 		#region edtior features

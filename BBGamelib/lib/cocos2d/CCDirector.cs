@@ -76,6 +76,7 @@ namespace BBGamelib{
 
 
 		int _globolRendererSortingOrder;
+		int _startGlbolRendererSortingOrder;
 
 		#endregion
 
@@ -166,6 +167,11 @@ namespace BBGamelib{
 		public int globolRendererSortingOrder{
 			get{return _globolRendererSortingOrder;}
 			set{ _globolRendererSortingOrder = value;}
+		}
+
+		public int startGlobolRendererSortingOrder{
+			get{return _startGlbolRendererSortingOrder;}
+			set{ _startGlbolRendererSortingOrder = value;}
 		}
 
 		#endregion
@@ -269,7 +275,7 @@ namespace BBGamelib{
 
 				
 	//			DateTime t3 = DateTime.Now;
-				_globolRendererSortingOrder = 0;
+				_globolRendererSortingOrder = _startGlbolRendererSortingOrder;
 				if(_runningScene!=null)
 					_runningScene.visit();
 			}catch(Exception e){
@@ -324,23 +330,24 @@ namespace BBGamelib{
 		#endregion
 		
 		#region Director Scene Landscape
-		public Vector2 convertToGL(Vector2 uiPoint)
-		{
-			Vector2 glSize = _view.bounds.size;
-			uiPoint += glSize * 0.5f;
-			return uiPoint;
-		}
+//		public Vector2 convertToGL(Vector2 uiPoint)
+//		{
+//			Vector2 glSize = _view.bounds.size;
+//			uiPoint += glSize * 0.5f;
+//			return uiPoint;
+//		}
+		[Obsolete("Deprecated. Use touch.location instead.")]
 		public Vector2 convertTouchToGL(UITouch touch)
 		{
 			Vector2 uiPoint = touch.location;
-			return convertToGL(uiPoint);
+			return uiPoint;
 		}
-		public Vector2 convertToUI(Vector2 glPoint)
-		{	
-			Vector2 glSize = _view.bounds.size;
-			glPoint -= glSize * 0.5f;
-			return glPoint;
-		}
+//		public Vector2 convertToUI(Vector2 glPoint)
+//		{	
+//			Vector2 glSize = _view.bounds.size;
+//			glPoint -= glSize * 0.5f;
+//			return glPoint;
+//		}
 
 		public Vector2 winSize
 		{

@@ -35,15 +35,15 @@ namespace BBGamelib{
 			
 			//Calculate angle
 			_startAngle = ((CCNode)_target).rotation;
-			if (_startAngle > 0)
+			if (FloatUtils.Big(_startAngle , 0))
 				_startAngle = _startAngle % 360.0f;
 			else
 				_startAngle = _startAngle % -360.0f;
 			
 			_diffAngle = _dstAngle - _startAngle;
-			if (_diffAngle > 180)
+			if (FloatUtils.Big(_diffAngle , 180))
 				_diffAngle -= 360;
-			if (_diffAngle < -180)
+			if (FloatUtils.Small(_diffAngle , -180))
 				_diffAngle += 360;
 		}
 

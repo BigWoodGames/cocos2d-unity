@@ -42,7 +42,6 @@ namespace BBGamelib{
 				} else {
 					_Instance = this;
 				}
-				DontDestroyOnLoad (this.gameObject);
 			} 
 			if (firstPassFlag) {
 				gameObject.transform.position = Vector3.zero;

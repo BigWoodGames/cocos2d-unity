@@ -244,7 +244,9 @@ namespace BBGamelib{
 		{				
 			if (FloatUtils.EQ(_dimensions.x , 0) || FloatUtils.EQ(_dimensions.y , 0)) {
 				_content.mesh.text = _text;
-				this.contentSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
+				Bounds localBounds = getLocalbounds();
+				Vector2 textSize = ccUtils.UnitsToPixels (localBounds.size);
+				this.contentSize = textSize;
 			} else {
 				string finalText = "";
 				string originalText = _text;
@@ -262,8 +264,8 @@ namespace BBGamelib{
 					}
 
 					_content.mesh.text = tmpStr;
-					Vector2 csize = _content.renderer.bounds.size;
-					csize = ccUtils.UnitsToPixels(csize);
+					Bounds localBounds = getLocalbounds();
+					Vector2 csize = ccUtils.UnitsToPixels (localBounds.size);
 					if(FloatUtils.Big(csize.x , _dimensions.x)){
 						if(preEmptyCharIndex==-1)
 							tmpStr = originalText.Substring(0, i);
@@ -345,24 +347,21 @@ namespace BBGamelib{
 
 		
 		#region CCLabelTTF - updateTransform
-		
 		public override void updateTransform ()
 		{
 			base.updateTransform ();
 			if (_isContentDirty) {
 				Vector2 contentPosition = _contentSize / 2;
+				Bounds localBounds = getLocalbounds();
+				Vector2 textSize = ccUtils.UnitsToPixels (localBounds.size);
 				if(verticalAlignment == CCVerticalTextAlignment.Top){
-					Vector2 textSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
 					contentPosition.y = _contentSize.y - textSize.y/2;
 				}else if(verticalAlignment == CCVerticalTextAlignment.Bottom){
-					Vector2 textSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
 					contentPosition.y = textSize.y/2;
 				}
 				if(horizontalAlignment == CCTextAlignment.Right){
-					Vector2 textSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
 					contentPosition.x = _contentSize.x - textSize.x/2;
 				}else if(horizontalAlignment == CCTextAlignment.Left){
-					Vector2 textSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
 					contentPosition.x = textSize.x/2;
 				}
 
@@ -386,7 +385,6 @@ namespace BBGamelib{
 				_isContentDirty = false;
 			}
 		}
-
 		#endregion
 		
 		#region CCLabelTTF - RGBA protocol
@@ -396,9 +394,9 @@ namespace BBGamelib{
 			
 			// special opacity for premultiplied textures
 			if ( _opacityModifyRGB ) {
-				color4.r *= (byte)(_displayedOpacity/255.0f);
-				color4.g *= (byte)(_displayedOpacity/255.0f);
-				color4.b *= (byte)(_displayedOpacity/255.0f);
+				color4.r = (byte)(color4.r * _displayedOpacity/255.0f);
+				color4.g = (byte)(color4.g * _displayedOpacity/255.0f);
+				color4.b = (byte)(color4.b * _displayedOpacity/255.0f);
 			}
 			_quadColor = color4;
 			_content.mesh.color = _quadColor;
@@ -440,6 +438,12 @@ namespace BBGamelib{
 		}
 		
 		#endregion
+
+		Bounds getLocalbounds(){
+			Bounds bounds = _content.renderer.bounds;
+			bounds = convertToNodeSpace (bounds);
+			return bounds;
+		}
 	}
 }
 

@@ -33,9 +33,9 @@ namespace BBGamelib{
 		//
 		// "updates with priority" stuff
 		//
-		List<tListEntry> updatesNeg;
-		List<tListEntry> updates0;
-		List<tListEntry> updatesPos;
+		utList<tListEntry> updatesNeg;
+		utList<tListEntry> updates0;
+		utList<tListEntry> updatesPos;
 		UTHash<int, tHashUpdateEntry> hashForUpdates;
 		
 		// Used for "selectors with interval"
@@ -60,9 +60,9 @@ namespace BBGamelib{
 //			impMethod = (TICK_IMP) [CCTimerTargetSelector instanceMethodForSelector:updateSelector];
 
 			// updates with priority
-			updates0 = new List<tListEntry>();
-			updatesNeg = new List<tListEntry>();
-			updatesPos = new List<tListEntry>();
+			updates0 = new utList<tListEntry>();
+			updatesNeg = new utList<tListEntry>();
+			updatesPos = new utList<tListEntry>();
 			hashForUpdates = new UTHash<int, tHashUpdateEntry>();
 			
 			// selectors with interval
@@ -284,33 +284,43 @@ namespace BBGamelib{
 		
 		#region CCScheduler - Update Specific
 
-		void priorityIn(List<tListEntry> list, System.Object target, int priority, bool paused){
-			tListEntry listElement = new tListEntry ();
-			listElement.target = target;
-			listElement.priority = priority;
-			listElement.paused = paused;
-
+		void priorityIn(utList<tListEntry> list, System.Object target, int priority, bool paused){
+			tListEntry listEntry = new tListEntry ();
+			listEntry.target = target;
+			listEntry.priority = priority;
+			listEntry.paused = paused;
 			MethodInfo method = target.GetType ().GetMethod (updateSelector);
-			listElement.impMethod = (TICK_IMP) Delegate.CreateDelegate(typeof(TICK_IMP), target, method);
-
-			listElement.markedForDeletion = false;
+			listEntry.impMethod = (TICK_IMP) Delegate.CreateDelegate(typeof(TICK_IMP), target, method);
+			listEntry.markedForDeletion = false;
 			
-			if (list.Count == 0) {
-				list.Add(listElement);
+			utNode<tListEntry> listElement = new utNode<tListEntry> ();
+			listElement.next = listElement.prev = null;
+			listElement.obj = listEntry;
+
+			
+			if (list.head == null) {
+				list.DL_APPEND(listElement);
 			} else {
 				bool added = false;
-				var enumerator = list.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					var elem = enumerator.Current;
-					if(priority < elem.priority){
-						int elemIndex = list.IndexOf(elem);
-						list.Insert(elemIndex, listElement);
+				for( utNode<tListEntry> elem = list.head; elem != null ; elem = elem.next ) {
+					if(priority < elem.obj.priority){
+						
+						if( elem == list.head )
+							list.DL_PREPEND(listElement);
+						else {
+							listElement.next = elem;
+							listElement.prev = elem.prev;
+							
+							elem.prev.next = listElement;
+							elem.prev = listElement;
+						}
 						added = true;
 						break;
 					}
 				}
+
 				if(!added)
-					list.Add(listElement);
+					list.DL_APPEND(listElement);
 			}
 			tHashUpdateEntry hashElement = new tHashUpdateEntry ();
 			hashElement.target = target;
@@ -319,16 +329,19 @@ namespace BBGamelib{
 			hashForUpdates.HASH_ADD_INT (target.GetHashCode(), hashElement);
 		}
 		
-		void appendIn(List<tListEntry> list, System.Object target, bool paused){
-			tListEntry listElement = new tListEntry ();
-			listElement.target = target;
-			listElement.paused = paused;
-			listElement.markedForDeletion = false;
-
+		void appendIn(utList<tListEntry> list, System.Object target, bool paused){
+			tListEntry listEntry = new tListEntry ();
+			listEntry.target = target;
+			listEntry.paused = paused;
+			listEntry.markedForDeletion = false;
 			MethodInfo method = target.GetType ().GetMethod (updateSelector);
-			listElement.impMethod = (TICK_IMP) Delegate.CreateDelegate(typeof(TICK_IMP), target, method);
+			listEntry.impMethod = (TICK_IMP) Delegate.CreateDelegate(typeof(TICK_IMP), target, method);
+			
+			utNode<tListEntry> listElement = new utNode<tListEntry> ();
+			listElement.next = listElement.prev = null;
+			listElement.obj = listEntry;
 
-			list.Add(listElement);
+			list.DL_APPEND(listElement);
 			
 			tHashUpdateEntry hashElement = new tHashUpdateEntry ();
 			hashElement.target = target;
@@ -346,10 +359,10 @@ namespace BBGamelib{
 			tHashUpdateEntry hashElement = hashForUpdates.HASH_FIND_INT(target.GetHashCode());
 			if (hashElement!=null) {
 				if(CCDebug.COCOS2D_DEBUG>=1)
-					NSUtils.Assert(hashElement.entry.markedForDeletion, "CCScheduler: You can't re-schedule an 'update' selector'. Unschedule it first");			
+					NSUtils.Assert(hashElement.entry.obj.markedForDeletion, "CCScheduler: You can't re-schedule an 'update' selector'. Unschedule it first");			
 
 				// TODO : check if priority has changed!
-				hashElement.entry.markedForDeletion = false;
+				hashElement.entry.obj.markedForDeletion = false;
 				return;
 			}
 			
@@ -366,11 +379,11 @@ namespace BBGamelib{
 		}
 
 		
-		void removeUpdatesFromHash(tListEntry entry){
-			tHashUpdateEntry element = hashForUpdates.HASH_FIND_INT (entry.target.GetHashCode());
+		void removeUpdatesFromHash(utNode<tListEntry> entry){
+			tHashUpdateEntry element = hashForUpdates.HASH_FIND_INT (entry.obj.target.GetHashCode());
 			if (element != null) {
 				// list entry
-				element.list.Remove(element.entry);	
+				element.list.DL_DELETE(element.entry);	
 				element.entry = null;
 				
 				// hash entry
@@ -388,7 +401,7 @@ namespace BBGamelib{
 			tHashUpdateEntry element = hashForUpdates.HASH_FIND_INT (target.GetHashCode());
 			if (element != null) {
 				if(updateHashLocked)
-					element.entry.markedForDeletion = true;
+					element.entry.obj.markedForDeletion = true;
 				else
 					removeUpdatesFromHash(element.entry);
 			}
@@ -420,23 +433,23 @@ namespace BBGamelib{
 			}
 			// Updates selectors
 			if(minPriority < 0) {
-				for(int i=updatesNeg.Count - 1; i>=0 ;i--){
-					tListEntry entry = updatesNeg[i];
-					if(entry.priority >= minPriority) {
-						unscheduleUpdateForTarget(entry.target);
+				for( utNode<tListEntry> tmp = updatesNeg.head; tmp != null ; tmp = tmp.next ) {
+					utNode<tListEntry> entry = tmp;
+					if(entry.obj.priority >= minPriority) {
+						unscheduleUpdateForTarget(entry.obj.target);
 					}
 				}
 			}
 			if(minPriority <= 0) {
-				for(int i=updates0.Count - 1; i>=0 ;i--){
-					tListEntry entry = updates0[i];
-					unscheduleUpdateForTarget(entry.target);
+				for( utNode<tListEntry> tmp = updates0.head; tmp != null ; tmp = tmp.next ) {
+					utNode<tListEntry> entry = tmp;
+					unscheduleUpdateForTarget(entry.obj.target);
 				}
 			}
-			for(int i=updatesPos.Count - 1; i>=0 ;i--){
-				tListEntry entry = updatesPos[i];
-				if(entry.priority >= minPriority) {
-					unscheduleUpdateForTarget(entry.target);
+			for( utNode<tListEntry> tmp = updatesPos.head; tmp != null ; tmp = tmp.next ) {
+				utNode<tListEntry> entry = tmp;
+				if(entry.obj.priority >= minPriority) {
+					unscheduleUpdateForTarget(entry.obj.target);
 				}
 			}
 		}
@@ -488,7 +501,7 @@ namespace BBGamelib{
 			tHashUpdateEntry elementUpdate = hashForUpdates.HASH_FIND_INT (target.GetHashCode());
 			if (elementUpdate != null) {
 				NSUtils.Assert(elementUpdate.entry != null, "pauseTarget: unknown error");
-				elementUpdate.entry.paused = false;
+				elementUpdate.entry.obj.paused = false;
 			}
 		}
 
@@ -511,7 +524,7 @@ namespace BBGamelib{
 			tHashUpdateEntry elementUpdate = hashForUpdates.HASH_FIND_INT (target.GetHashCode());
 			if (elementUpdate != null) {
 				NSUtils.Assert(elementUpdate.entry != null, "pauseTarget: unknown error");
-				elementUpdate.entry.paused = true;
+				elementUpdate.entry.obj.paused = true;
 			}
 		}
 		
@@ -529,7 +542,7 @@ namespace BBGamelib{
 			// We should check update selectors if target does not have custom selectors
 			tHashUpdateEntry elementUpdate = hashForUpdates.HASH_FIND_INT(target.GetHashCode());
 			if ( elementUpdate != null)
-				return elementUpdate.entry.paused;
+				return elementUpdate.entry.obj.paused;
 			
 			return false;  // should never get here
 		}
@@ -563,30 +576,28 @@ namespace BBGamelib{
 			}
 			// Updates selectors
 			if(minPriority < 0) {
-				var enumerator = updatesNeg.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					var entry = enumerator.Current;
-					if(entry.priority >= minPriority) {
-						entry.paused = true;
-						idsWithSelectors.Add(entry.target);
+				for( utNode<tListEntry> tmp = updatesNeg.head; tmp != null ; tmp = tmp.next ) {
+					utNode<tListEntry> entry = tmp;
+					if(entry.obj.priority >= minPriority) {
+						entry.obj.paused = true;
+						idsWithSelectors.Add(entry.obj.target);
 					}
 				}
 			}
 			if(minPriority <= 0) {
-				var enumerator = updates0.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					var entry = enumerator.Current;
-					entry.paused = true;
-					idsWithSelectors.Add(entry.target);
+				for( utNode<tListEntry> tmp = updates0.head; tmp != null ; tmp = tmp.next ) {
+					utNode<tListEntry> entry = tmp;
+					entry.obj.paused = true;
+					idsWithSelectors.Add(entry.obj.target);
 				}
 			}
 			{
-				var enumerator = updatesPos.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					var entry = enumerator.Current;
-					if(entry.priority >= minPriority) {
-						entry.paused = true;
-						idsWithSelectors.Add(entry.target);
+				
+				for( utNode<tListEntry> tmp = updatesPos.head; tmp != null ; tmp = tmp.next ) {
+					utNode<tListEntry> entry = tmp;
+					if(entry.obj.priority >= minPriority) {
+						entry.obj.paused = true;
+						idsWithSelectors.Add(entry.obj.target);
 					}
 				}
 			}
@@ -624,30 +635,29 @@ namespace BBGamelib{
 			// Iterate all over the Updates selectors
 			// updates with priority < 0
 			{
-				var enumerator = updatesNeg.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					var entry = enumerator.Current;
-					if(! entry.paused && !entry.markedForDeletion){
-						entry.impMethod.Invoke(dt);
+				
+				for( utNode<tListEntry> tmp = updatesNeg.head; tmp != null ; tmp = tmp.next ) {
+					utNode<tListEntry> entry = tmp;
+					if(! entry.obj.paused && !entry.obj.markedForDeletion){
+						entry.obj.impMethod.Invoke(dt);
 					}
 				}
 			}
 			// updates with priority == 0
 			{
-				var enumerator = updates0.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					var entry = enumerator.Current;
-					if(! entry.paused && !entry.markedForDeletion)
-						entry.impMethod.Invoke(dt);
+				for( utNode<tListEntry> tmp = updates0.head; tmp != null ; tmp = tmp.next ) {
+					utNode<tListEntry> entry = tmp;
+					if(! entry.obj.paused && !entry.obj.markedForDeletion)
+						entry.obj.impMethod.Invoke(dt);
 				}
 			}
 			// updates with priority > 0
 			{
-				var enumerator = updatesPos.GetEnumerator();
-				while (enumerator.MoveNext()) {
-					var entry = enumerator.Current;
-					if(! entry.paused && !entry.markedForDeletion)
-						entry.impMethod.Invoke(dt);
+				
+				for( utNode<tListEntry> tmp = updatesPos.head; tmp != null ; tmp = tmp.next ) {
+					utNode<tListEntry> entry = tmp;
+					if(! entry.obj.paused && !entry.obj.markedForDeletion)
+						entry.obj.impMethod.Invoke(dt);
 				}
 			}
 
@@ -670,23 +680,26 @@ namespace BBGamelib{
 						removeHashElement(currentTarget);
 				}
 			}
-			for(int i=updatesNeg.Count - 1; i>=0 ;i--){
-				tListEntry entry = updatesNeg[i];
-				if(entry.markedForDeletion){
+
+			
+			for (utNode<tListEntry> tmp = updatesNeg.head; tmp != null; tmp = tmp.next) {
+				utNode<tListEntry> entry = tmp;
+				if(entry.obj.markedForDeletion){
+					removeUpdatesFromHash(entry);
+				}
+			}
+			
+			for (utNode<tListEntry> tmp = updates0.head; tmp != null; tmp = tmp.next) {
+				utNode<tListEntry> entry = tmp;
+				if(entry.obj.markedForDeletion){
 					removeUpdatesFromHash(entry);
 				}
 			}
 
-			for(int i=updates0.Count - 1; i>=0 ;i--){
-				tListEntry entry = updates0[i];
-				if(entry.markedForDeletion){
-					removeUpdatesFromHash(entry);
-				}
-			}
-
-			for(int i=updatesPos.Count - 1; i>=0 ;i--){
-				tListEntry entry = updatesPos[i];
-				if(entry.markedForDeletion){
+			
+			for (utNode<tListEntry> tmp = updatesPos.head; tmp != null; tmp = tmp.next) {
+				utNode<tListEntry> entry = tmp;
+				if(entry.obj.markedForDeletion){
 					removeUpdatesFromHash(entry);
 				}
 			}

@@ -203,7 +203,7 @@ namespace BBGamelib{
 				return _rotation;		
 			}
 			set{
-				if(_rotation!=value){
+				if(FloatUtils.NEQ(_rotation, value)){
 					_rotation = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
 				}
@@ -213,12 +213,12 @@ namespace BBGamelib{
 		/** The scale factor of the node. 1.0 is the default scale factor. It modifies the X and Y scale at the same time. */
 		public virtual float scale{
 			get{
-				NSUtils.Assert( _scaleX == _scaleY, "CCNode#scale. ScaleX != ScaleY. Don't know which one to return");
+				NSUtils.Assert( FloatUtils.EQ(_scaleX , _scaleY), "CCNode#scale. ScaleX != ScaleY. Don't know which one to return");
 				return _scaleX;
 			}
 			set{
 				
-				if(_scaleX!=value || _scaleY != value){
+				if(FloatUtils.NEQ(_scaleX, value)||FloatUtils.NEQ(_scaleY, value)){
 					scaleX = value;
 					scaleY = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
@@ -232,7 +232,7 @@ namespace BBGamelib{
 				return _scaleX;
 			}
 			set{
-				if(_scaleX!=value){
+				if(FloatUtils.NEQ(_scaleX, value)){
 					_scaleX = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
 				}
@@ -245,7 +245,7 @@ namespace BBGamelib{
 				return _scaleY;
 			}
 			set{
-				if(_scaleY!=value){
+				if(FloatUtils.NEQ(_scaleY, value)){
 					_scaleY = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
 				}
@@ -269,7 +269,7 @@ namespace BBGamelib{
 				return _position.x;
 			}
 			set{
-				if(_position.x!=value){
+				if(FloatUtils.NEQ(_position.x, value)){
 					_position.x = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
 				}
@@ -280,7 +280,7 @@ namespace BBGamelib{
 				return _position.y;
 			}
 			set{
-				if(_position.y!=value){
+				if(FloatUtils.NEQ(_position.y, value)){
 					_position.y = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
 				}
@@ -667,7 +667,7 @@ namespace BBGamelib{
 		#endregion
 
 		#region CCNode - Transformations
-		void transformAncestors()
+		protected virtual void transformAncestors()
 		{
 			if( _parent !=null) {
 				_parent.transformAncestors();
@@ -684,28 +684,46 @@ namespace BBGamelib{
 //				Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParent);
 //				transform.localPosition = new Vector3 (pInUIUnits.x, pInUIUnits.y, transform.localPosition.z);
 
-				if(_parent!=null && _parent.ignoreAnchorPointForPosition){
-					CGAffineTransform tmpAffine = _parent.nodeToWorldTransform ();
-					Vector2 pInWorld = CGAffineTransform.CGPointApplyAffineTransform (_position, tmpAffine);
-					Vector2 pInUI = CCDirector.sharedDirector.convertToUI (pInWorld);
-					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInUI);
-					transform.position = new Vector3 (pInUIUnits.x, pInUIUnits.y, transform.position.z);
-				}else{
-					Vector2 pInParentAR = _position;
-					if(_parent==null)
-						pInParentAR = CCDirector.sharedDirector.convertToUI(pInParentAR);
-					else  if(!_parent.ignoreAnchorPointForPosition)
-						pInParentAR -= _parent._anchorPointInPixels;
-					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
-					Vector3 pos = transform.localPosition;
-					pos.x = pInUIUnits.x;
-					pos.y = pInUIUnits.y;
-					transform.localPosition = pos;
+//				if(_parent!=null && _parent.ignoreAnchorPointForPosition){
+//					CGAffineTransform tmpAffine = _parent.nodeToWorldTransform ();
+//					Vector2 pInWorld = CGAffineTransform.CGPointApplyAffineTransform (_position, tmpAffine);
+//					Vector2 pInUI = CCDirector.sharedDirector.convertToUI (pInWorld);
+//					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInUI);
+//
+//					transform.position = new Vector3 (pInUIUnits.x, pInUIUnits.y, 0);
+//
+//					Vector3 localPos = transform.localPosition;
+//					localPos.z = -_positionZ / UIWindow.PIXEL_PER_UNIT;
+//					transform.localPosition = localPos;
+//				}else{
+//					Vector2 pInParentAR = _position;
+//					if(_parent==null)
+//						pInParentAR = CCDirector.sharedDirector.convertToUI(pInParentAR);
+//					else
+//						pInParentAR -= _parent._anchorPointInPixels;
+//					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
+//					Vector3 pos = transform.localPosition;
+//					pos.x = pInUIUnits.x;
+//					pos.y = pInUIUnits.y;
+//					pos.z = -_positionZ / UIWindow.PIXEL_PER_UNIT;
+//					transform.localPosition = pos;
+//				}
+
+				Vector2 pInParentAR = _position;
+				if(_parent!=null && !_parent.ignoreAnchorPointForPosition){
+					pInParentAR -= _parent._anchorPointInPixels;
 				}
+				Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
+				Vector3 pos = transform.localPosition;
+				pos.x = pInUIUnits.x;
+				pos.y = pInUIUnits.y;
+				pos.z = 0;
+				transform.localPosition = pos;
 
 				
 				//rotation
 				Vector3 rotation = transform.localEulerAngles;
+				rotation.x = 0;
 				rotation.z = -_rotation;
 				rotation.y = 0;
 				bool negativeScaleX = FloatUtils.Small(_scaleX, 0);
@@ -991,50 +1009,78 @@ namespace BBGamelib{
 			return CGAffineTransform.Invert(nodeToWorldTransform());
 		}
 		
-		public Vector2 convertToNodeSpace(Vector2 worldPoint)
+		public virtual Vector2 convertToNodeSpace(Vector2 worldPoint)
 		{
 			Vector2 ret = CGAffineTransform.CGPointApplyAffineTransform(worldPoint, worldToNodeTransform());
 			return ret;
 		}
 		
-		public Vector2 convertToWorldSpace(Vector2 nodePoint)
+		public virtual Vector2 convertToWorldSpace(Vector2 nodePoint)
 		{
 			Vector2 ret = CGAffineTransform.CGPointApplyAffineTransform(nodePoint, nodeToWorldTransform());
 			return ret;
 		}
 
-		public Vector2 convertToNodeSpaceAR(Vector2 worldPoint)
+		public virtual Vector2 convertToNodeSpaceAR(Vector2 worldPoint)
 		{
 			Vector2 nodePoint = convertToNodeSpace(worldPoint);
 			return (nodePoint - _anchorPointInPixels);
 		}
 		
-		public Vector2 convertToWorldSpaceAR(Vector2 nodePoint)
+		public virtual Vector2 convertToWorldSpaceAR(Vector2 nodePoint)
 		{
 			nodePoint = (nodePoint + _anchorPointInPixels);
 			return convertToWorldSpace(nodePoint);
 		}
 		
-		public Vector2 convertToWindowSpace(Vector2 nodePoint)
+		public virtual Vector2 convertToWindowSpace(Vector2 nodePoint)
 		{
 			Vector2 worldPoint = convertToWorldSpace(nodePoint);
-			return CCDirector.sharedDirector.convertToUI (worldPoint);
+//			return CCDirector.sharedDirector.convertToUI (worldPoint);
+			return worldPoint;
 		}
 
-		public Vector2 convertTouchToNodeSpace(UITouch touch)
+		public virtual Vector2 convertTouchToNodeSpace(UITouch touch)
 		{
 			Vector2 point = touch.location;
-			point = CCDirector.sharedDirector.convertToGL (point);
-			return convertToNodeSpace(point);
+//			point = CCDirector.sharedDirector.convertToGL (point);
+//			return convertToNodeSpace(point);
+			return point;
 		}
 		
-		public Vector2 convertTouchToNodeSpaceAR(UITouch touch)
+		public virtual Vector2 convertTouchToNodeSpaceAR(UITouch touch)
 		{
 			Vector2 point = touch.location;
-			point = CCDirector.sharedDirector.convertToGL (point);
+//			point = CCDirector.sharedDirector.convertToGL (point);
 			return convertToNodeSpaceAR(point);
 		}
 
+		
+		public virtual Bounds convertToNodeSpace(Bounds bounds){
+			transformAncestors ();
+			var min = bounds.min;
+			var max = bounds.max;
+			var transform = this.transform;
+			var center = transform.InverseTransformPoint(bounds.center);
+			var point1 = transform.InverseTransformPoint(new Vector3(min.x, min.y, min.z));
+			var point2 = transform.InverseTransformPoint(new Vector3(min.x, min.y, max.z));
+			var point3 = transform.InverseTransformPoint(new Vector3(min.x, max.y, min.z));
+			var point4 = transform.InverseTransformPoint(new Vector3(min.x, max.y, max.z));
+			var point5 = transform.InverseTransformPoint(new Vector3(max.x, min.y, min.z));
+			var point6 = transform.InverseTransformPoint(new Vector3(max.x, min.y, max.z));
+			var point7 = transform.InverseTransformPoint(new Vector3(max.x, max.y, min.z));
+			var point8 = transform.InverseTransformPoint(new Vector3(max.x, max.y, max.z));
+			var result = new Bounds(center, Vector3.zero);
+			result.Encapsulate(point1);
+			result.Encapsulate(point2);
+			result.Encapsulate(point3);
+			result.Encapsulate(point4);
+			result.Encapsulate(point5);
+			result.Encapsulate(point6);
+			result.Encapsulate(point7);
+			result.Encapsulate(point8);
+			return result;
+		}
 		
 		#if UNITY_STANDALONE || UNITY_WEBGL
 		public Vector2 convertMouseEventToNodeSpace(NSEvent evt)

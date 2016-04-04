@@ -1,0 +1,9 @@
+version 2.1 - 17-Jun-2013
+
+. [FIX] UIWindow: Removed BoxCollider2D.
+. [FIX] CCDirector: Removed DontDestroyOnLoad, which is needed for root object only.
+. [FIX] CCScheduler: Changed List<tListEntry> to utList<tListEntry> for safe iterate.
+. [FIX] CCLabelTTF: Fixed position issue with anchor point.
+. [FIX] CCLabelTTF: Fixed opacity issue under opacityModifyRGB mode.
+. [FIX] CCDirector: The orginal point is the same with the world's now.
+

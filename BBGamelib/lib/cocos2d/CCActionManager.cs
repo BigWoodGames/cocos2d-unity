@@ -21,12 +21,12 @@ namespace BBGamelib{
 
 	public class CCActionManager
 	{
-		UTHash<int, tHashElement> _targets;
+		utHash<int, tHashElement> _targets;
 		tHashElement _currentTarget;
 		bool _currentTargetSavlvaged;
 
 		public CCActionManager(){
-			_targets = new UTHash<int, tHashElement>();
+			_targets = new utHash<int, tHashElement>();
 		}
 
 		public override string ToString ()

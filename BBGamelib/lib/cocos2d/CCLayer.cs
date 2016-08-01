@@ -5,13 +5,13 @@ using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace BBGamelib{
-	public enum kCCTouchesMode{
-		AllAtOnce,
-		OneByOne,
-	}
-
-	public class CCLayerBase : CCNode, CCTouchAllAtOnceDelegate, CCTouchOneByOneDelegate
+	public class CCLayerBase : CCNode, CCTouchAllAtOnceDelegate, CCTouchOneByOneDelegate, CCKeyboardEventDelegate, CCMouseEventDelegate
 	{
+		public enum kCCTouchesMode{
+			AllAtOnce,
+			OneByOne,
+		}
+
 		protected bool _touchEnabled;
 		protected int _touchPriority;
 		protected kCCTouchesMode _touchMode;
@@ -149,123 +149,33 @@ namespace BBGamelib{
 		public virtual void ccTouchesEnded(HashSet<UITouch> touches){}
 		public virtual void ccTouchesCancelled(HashSet<UITouch> touches){}
 		#endregion
-	}
-	
-	#if UNITY_STANDALONE || UNITY_WEBGL
-	public class CCLayer : CCLayerBase, CCKeyboardEventDelegate, CCMouseEventDelegate
-	{
-		bool	_mouseEnabled;
-		int		_mousePriority;
-		
-		bool	_keyboardEnabled;
-		int		_keyboardPriority;
-
-		protected override void init()
-		{
-			base.init ();
-
-			_mouseEnabled = false;
-			_mousePriority = 0;
-			_keyboardEnabled = false;
-			_keyboardPriority = 0;
-		}
-
-		public override void onEnter ()
-		{
-			base.onEnter ();
-			CCEventDispatcher eventDispatcher = CCDirectorMac.sharedDirector.eventDispatcher;
-			
-			if( _mouseEnabled )
-				eventDispatcher.addMouseDelegate(this, _mousePriority);
-			
-			if( _keyboardEnabled)
-				eventDispatcher.addKeyboardDelegate(this, _keyboardPriority);
-		}
-
-		public override void onExit ()
-		{
-			CCEventDispatcher eventDispatcher = CCDirectorMac.sharedDirector.eventDispatcher;
-			if( _mouseEnabled )
-				eventDispatcher.removeMouseDelegate(this);
-			
-			if( _keyboardEnabled )
-				eventDispatcher.removeKeyboardDelegate(this);
-			base.onExit ();
-		}
-
-		/** whether or not it will receive mouse events.
-
-		 Valid only on OS X. Not valid on iOS
-		 */
+		#region keyboard & mouse compatible
 		public virtual bool isMouseEnabled{
-			get{ return _mouseEnabled;}
-			set{
-				if( _mouseEnabled != value ) {
-					_mouseEnabled = value;
-					if( _isRunning) {
-						CCDirectorMac director = (CCDirectorMac)CCDirector.sharedDirector;
-						if( value )
-							director.eventDispatcher.addMouseDelegate(this, _mousePriority);
-						else {
-							director.eventDispatcher.removeMouseDelegate(this);
-						}
-					}
-				}	
-			}
+			get{return false;}
+			set{ }
 		}
 
 		/** priority of the mouse events. Default is 0 */
 		public virtual int mousePriority{
-			get{ return _mousePriority;}
-			set{
-				if( _mousePriority != value ) {
-					_mousePriority = value;
-					
-					if( _mouseEnabled) {
-						this.isMouseEnabled = false;
-						this.isMouseEnabled = true;
-					}
-				}			
-			}
+			get{ return 0;}
+			set{		}
 		}
 
-		
 		/** whether or not it will receive keyboard events.
 
 		 Valid only on OS X. Not valid on iOS
 		 */
 		public virtual bool isKeyboardEnabled{
-			get{ return _keyboardEnabled;}
-			set{
-				if( _keyboardEnabled != value ) {
-					_keyboardEnabled = value;
-					if( _isRunning) {
-						CCDirectorMac director = (CCDirectorMac)CCDirector.sharedDirector;
-						if( value )
-							director.eventDispatcher.addKeyboardDelegate(this, _keyboardPriority);
-						else {
-							director.eventDispatcher.removeKeyboardDelegate(this);
-						}
-					}
-				}	
-			}
+			get{ return false;}
+			set{}
 		}
 		/** Priority of keyboard events. Default is 0 */
-//		@property (nonatomic, assign) NSInteger keyboardPriority;
+		//		@property (nonatomic, assign) NSInteger keyboardPriority;
 		public virtual int keyboardPriority{
-			get{ return _keyboardPriority;}
-			set{
-				if( _keyboardPriority != value ) {
-					_keyboardPriority = value;
-					
-					if( _keyboardEnabled) {
-						this.isKeyboardEnabled = false;
-						this.isKeyboardEnabled = true;
-					}
-				}			
-			}
+			get{ return 0;}
+			set{		}
 		}
-		
+
 		public virtual bool ccKeyDown(NSEvent theEvent){
 			return false; 
 		}
@@ -310,6 +220,123 @@ namespace BBGamelib{
 		}
 		public virtual bool ccMouseExited(NSEvent theEvent){
 			return false; 
+		}
+		#endregion
+	}
+
+	#if UNITY_STANDALONE || UNITY_WEBGL
+	public class CCLayer : CCLayerBase
+	{
+		bool	_mouseEnabled;
+		int		_mousePriority;
+
+		bool	_keyboardEnabled;
+		int		_keyboardPriority;
+
+		protected override void init()
+		{
+			base.init ();
+
+			_mouseEnabled = false;
+			_mousePriority = 0;
+			_keyboardEnabled = false;
+			_keyboardPriority = 0;
+		}
+
+		public override void onEnter ()
+		{
+			base.onEnter ();
+			CCEventDispatcher eventDispatcher = CCDirectorMac.sharedDirector.eventDispatcher;
+
+			if( _mouseEnabled )
+				eventDispatcher.addMouseDelegate(this, _mousePriority);
+
+			if( _keyboardEnabled)
+				eventDispatcher.addKeyboardDelegate(this, _keyboardPriority);
+		}
+
+		public override void onExit ()
+		{
+			CCEventDispatcher eventDispatcher = CCDirectorMac.sharedDirector.eventDispatcher;
+			if( _mouseEnabled )
+				eventDispatcher.removeMouseDelegate(this);
+
+			if( _keyboardEnabled )
+				eventDispatcher.removeKeyboardDelegate(this);
+			base.onExit ();
+		}
+
+		/** whether or not it will receive mouse events.
+
+		 Valid only on OS X. Not valid on iOS
+		 */
+		public override bool isMouseEnabled{
+			get{ return _mouseEnabled;}
+			set{
+				if( _mouseEnabled != value ) {
+					_mouseEnabled = value;
+					if( _isRunning) {
+						CCDirectorMac director = (CCDirectorMac)CCDirector.sharedDirector;
+						if( value )
+							director.eventDispatcher.addMouseDelegate(this, _mousePriority);
+						else {
+							director.eventDispatcher.removeMouseDelegate(this);
+						}
+					}
+				}	
+			}
+		}
+
+		/** priority of the mouse events. Default is 0 */
+		public override int mousePriority{
+			get{ return _mousePriority;}
+			set{
+				if( _mousePriority != value ) {
+					_mousePriority = value;
+
+					if( _mouseEnabled) {
+						this.isMouseEnabled = false;
+						this.isMouseEnabled = true;
+					}
+				}			
+			}
+		}
+
+
+		/** whether or not it will receive keyboard events.
+
+		 Valid only on OS X. Not valid on iOS
+		 */
+		public override bool isKeyboardEnabled{
+			get{ return _keyboardEnabled;}
+			set{
+				if( _keyboardEnabled != value ) {
+					_keyboardEnabled = value;
+					if( _isRunning) {
+						CCDirectorMac director = (CCDirectorMac)CCDirector.sharedDirector;
+						if( value )
+							director.eventDispatcher.addKeyboardDelegate(this, _keyboardPriority);
+						else {
+							director.eventDispatcher.removeKeyboardDelegate(this);
+						}
+					}
+				}	
+			}
+		}
+		/** Priority of keyboard events. Default is 0 */
+		//		@property (nonatomic, assign) NSInteger keyboardPriority;
+		public override int keyboardPriority{
+			get{ return _keyboardPriority;}
+			set{
+				if( _keyboardPriority != value ) {
+					_keyboardPriority = value;
+
+					if( _keyboardEnabled) {
+						this.isKeyboardEnabled = false;
+						this.isKeyboardEnabled = true;
+					}
+				}			
+			}
 		}
 	}
 	#else

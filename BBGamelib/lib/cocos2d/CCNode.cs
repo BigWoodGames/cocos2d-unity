@@ -167,9 +167,9 @@ namespace BBGamelib{
 					CCNode child = enumerator.Current;
 					child.cleanup ();
 				}
-				_parent = null;
 				_children.Clear ();
 			}
+			_parent = null;
 			recycleGear ();
 		}
 
@@ -203,7 +203,7 @@ namespace BBGamelib{
 				return _rotation;		
 			}
 			set{
-				if(_rotation!=value){
+				if(FloatUtils.NEQ(_rotation, value)){
 					_rotation = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
 				}
@@ -213,12 +213,12 @@ namespace BBGamelib{
 		/** The scale factor of the node. 1.0 is the default scale factor. It modifies the X and Y scale at the same time. */
 		public virtual float scale{
 			get{
-				NSUtils.Assert( _scaleX == _scaleY, "CCNode#scale. ScaleX != ScaleY. Don't know which one to return");
+				NSUtils.Assert( FloatUtils.EQ(_scaleX , _scaleY), "CCNode#scale. ScaleX != ScaleY. Don't know which one to return");
 				return _scaleX;
 			}
 			set{
 				
-				if(_scaleX!=value || _scaleY != value){
+				if(FloatUtils.NEQ(_scaleX, value)||FloatUtils.NEQ(_scaleY, value)){
 					scaleX = value;
 					scaleY = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
@@ -232,9 +232,18 @@ namespace BBGamelib{
 				return _scaleX;
 			}
 			set{
-				if(_scaleX!=value){
+				if(FloatUtils.NEQ(_scaleX, value)){
 					_scaleX = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
+
+					//reset child position if ignoreAnchorPointForPosition
+					if(_ignoreAnchorPointForPosition){
+						var enumerator = _children.GetEnumerator();
+						while (enumerator.MoveNext()) {
+							CCNode node = enumerator.Current;
+							node._isUpdateTransformDirty = true;
+						}
+					}
 				}
 			}
 		}
@@ -245,9 +254,18 @@ namespace BBGamelib{
 				return _scaleY;
 			}
 			set{
-				if(_scaleY!=value){
+				if(FloatUtils.NEQ(_scaleY, value)){
 					_scaleY = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
+
+					//reset child position if ignoreAnchorPointForPosition
+					if(_ignoreAnchorPointForPosition){
+						var enumerator = _children.GetEnumerator();
+						while (enumerator.MoveNext()) {
+							CCNode node = enumerator.Current;
+							node._isUpdateTransformDirty = true;
+						}
+					}
 				}
 			}
 		}
@@ -269,7 +287,7 @@ namespace BBGamelib{
 				return _position.x;
 			}
 			set{
-				if(_position.x!=value){
+				if(FloatUtils.NEQ(_position.x, value)){
 					_position.x = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
 				}
@@ -280,7 +298,7 @@ namespace BBGamelib{
 				return _position.y;
 			}
 			set{
-				if(_position.y!=value){
+				if(FloatUtils.NEQ(_position.y, value)){
 					_position.y = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
 				}
@@ -667,7 +685,7 @@ namespace BBGamelib{
 		#endregion
 
 		#region CCNode - Transformations
-		void transformAncestors()
+		protected virtual void transformAncestors()
 		{
 			if( _parent !=null) {
 				_parent.transformAncestors();
@@ -684,28 +702,52 @@ namespace BBGamelib{
 //				Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParent);
 //				transform.localPosition = new Vector3 (pInUIUnits.x, pInUIUnits.y, transform.localPosition.z);
 
-				if(_parent!=null && _parent.ignoreAnchorPointForPosition){
-					CGAffineTransform tmpAffine = _parent.nodeToWorldTransform ();
-					Vector2 pInWorld = CGAffineTransform.CGPointApplyAffineTransform (_position, tmpAffine);
-					Vector2 pInUI = CCDirector.sharedDirector.convertToUI (pInWorld);
-					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInUI);
-					transform.position = new Vector3 (pInUIUnits.x, pInUIUnits.y, transform.position.z);
-				}else{
-					Vector2 pInParentAR = _position;
-					if(_parent==null)
-						pInParentAR = CCDirector.sharedDirector.convertToUI(pInParentAR);
-					else  if(!_parent.ignoreAnchorPointForPosition)
-						pInParentAR -= _parent._anchorPointInPixels;
-					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
-					Vector3 pos = transform.localPosition;
-					pos.x = pInUIUnits.x;
-					pos.y = pInUIUnits.y;
-					transform.localPosition = pos;
-				}
+//				if(_parent!=null && _parent.ignoreAnchorPointForPosition){
+//					CGAffineTransform tmpAffine = _parent.nodeToWorldTransform ();
+//					Vector2 pInWorld = CGAffineTransform.CGPointApplyAffineTransform (_position, tmpAffine);
+//					Vector2 pInUI = CCDirector.sharedDirector.convertToUI (pInWorld);
+//					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInUI);
+//
+//					transform.position = new Vector3 (pInUIUnits.x, pInUIUnits.y, 0);
+//
+//					Vector3 localPos = transform.localPosition;
+//					localPos.z = -_positionZ / UIWindow.PIXEL_PER_UNIT;
+//					transform.localPosition = localPos;
+//				}else{
+//					Vector2 pInParentAR = _position;
+//					if(_parent==null)
+//						pInParentAR = CCDirector.sharedDirector.convertToUI(pInParentAR);
+//					else
+//						pInParentAR -= _parent._anchorPointInPixels;
+//					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
+//					Vector3 pos = transform.localPosition;
+//					pos.x = pInUIUnits.x;
+//					pos.y = pInUIUnits.y;
+//					pos.z = -_positionZ / UIWindow.PIXEL_PER_UNIT;
+//					transform.localPosition = pos;
+//				}
+
+				Vector2 pInParentAR = _position;
+				if(_parent!=null){
+					if(_parent.ignoreAnchorPointForPosition){
+						if(FloatUtils.NEQ(_parent.scaleX, 0) && FloatUtils.NEQ(_parent.scaleY, 0)){
+							pInParentAR += new Vector2(_parent.anchorPointInPixels.x * (1/_parent.scaleX - 1), _parent.anchorPointInPixels.y * (1/_parent.scaleY - 1)); 
+						}
+					}else{
+						pInParentAR -= _parent.anchorPointInPixels;
+                    }
+                }
+				Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
+				Vector3 pos = transform.localPosition;
+				pos.x = pInUIUnits.x;
+				pos.y = pInUIUnits.y;
+				pos.z = 0;
+				transform.localPosition = pos;
 
 				
 				//rotation
 				Vector3 rotation = transform.localEulerAngles;
+				rotation.x = 0;
 				rotation.z = -_rotation;
 				rotation.y = 0;
 				bool negativeScaleX = FloatUtils.Small(_scaleX, 0);
@@ -737,7 +779,8 @@ namespace BBGamelib{
 		//
 		public virtual void onEnter(){
 			if (_children != null) {
-				for(int i=_children.Count -1; i>=0; i--){
+				int childrenCount = _children.Count;
+				for(int i=0; i<childrenCount; i++){
 					CCNode child = _children[i];
 					child.onEnter();
 				}
@@ -748,7 +791,8 @@ namespace BBGamelib{
 		}
 		public virtual void onEnterTransitionDidFinish(){
 			if (_children != null) {
-				for(int i=_children.Count -1; i>=0; i--){
+				int childrenCount = _children.Count;
+				for(int i=0; i<childrenCount; i++){
 					CCNode child = _children[i];
 					child.onEnterTransitionDidFinish ();
 				}
@@ -756,7 +800,8 @@ namespace BBGamelib{
 		}
 		public virtual void onExitTransitionDidStart(){
 			if (_children != null) {
-				for(int i=_children.Count -1; i>=0; i--){
+				int childrenCount = _children.Count;
+				for(int i=0; i<childrenCount; i++){
 					CCNode child = _children[i];
 					child.onExitTransitionDidStart ();
 				}
@@ -767,7 +812,8 @@ namespace BBGamelib{
 			_isRunning = false;
 			
 			if (_children != null) {
-				for(int i=_children.Count -1; i>=0; i--){
+				int childrenCount = _children.Count;
+				for(int i=0; i<childrenCount; i++){
 					CCNode child = _children[i];
 					child.onExit ();
 				}
@@ -991,65 +1037,63 @@ namespace BBGamelib{
 			return CGAffineTransform.Invert(nodeToWorldTransform());
 		}
 		
-		public Vector2 convertToNodeSpace(Vector2 worldPoint)
+		public virtual Vector2 convertToNodeSpace(Vector2 worldPoint)
 		{
 			Vector2 ret = CGAffineTransform.CGPointApplyAffineTransform(worldPoint, worldToNodeTransform());
 			return ret;
 		}
 		
-		public Vector2 convertToWorldSpace(Vector2 nodePoint)
+		public virtual Vector2 convertToWorldSpace(Vector2 nodePoint)
 		{
 			Vector2 ret = CGAffineTransform.CGPointApplyAffineTransform(nodePoint, nodeToWorldTransform());
 			return ret;
 		}
 
-		public Vector2 convertToNodeSpaceAR(Vector2 worldPoint)
+		public virtual Vector2 convertToNodeSpaceAR(Vector2 worldPoint)
 		{
 			Vector2 nodePoint = convertToNodeSpace(worldPoint);
 			return (nodePoint - _anchorPointInPixels);
 		}
 		
-		public Vector2 convertToWorldSpaceAR(Vector2 nodePoint)
+		public virtual Vector2 convertToWorldSpaceAR(Vector2 nodePoint)
 		{
 			nodePoint = (nodePoint + _anchorPointInPixels);
 			return convertToWorldSpace(nodePoint);
 		}
 		
-		public Vector2 convertToWindowSpace(Vector2 nodePoint)
+		public virtual Vector2 convertToWindowSpace(Vector2 nodePoint)
 		{
 			Vector2 worldPoint = convertToWorldSpace(nodePoint);
-			return CCDirector.sharedDirector.convertToUI (worldPoint);
+//			return CCDirector.sharedDirector.convertToUI (worldPoint);
+			return worldPoint;
 		}
 
-		public Vector2 convertTouchToNodeSpace(UITouch touch)
+		public virtual Vector2 convertTouchToNodeSpace(UITouch touch)
 		{
 			Vector2 point = touch.location;
-			point = CCDirector.sharedDirector.convertToGL (point);
+//			point = CCDirector.sharedDirector.convertToGL (point);
 			return convertToNodeSpace(point);
+//			return point;
 		}
 		
-		public Vector2 convertTouchToNodeSpaceAR(UITouch touch)
+		public virtual Vector2 convertTouchToNodeSpaceAR(UITouch touch)
 		{
 			Vector2 point = touch.location;
-			point = CCDirector.sharedDirector.convertToGL (point);
+//			point = CCDirector.sharedDirector.convertToGL (point);
 			return convertToNodeSpaceAR(point);
 		}
-
 		
-		#if UNITY_STANDALONE || UNITY_WEBGL
 		public Vector2 convertMouseEventToNodeSpace(NSEvent evt)
 		{
-			Vector2 point = CCDirectorMac.sharedDirector.convertEventToGL (evt);
+			Vector2 point = evt.mouseLocation;
 			return convertToNodeSpace(point);
 		}
-		
+
 		public Vector2 convertMouseEventToNodeSpaceAR(NSEvent evt)
 		{
-			Vector2 point = CCDirectorMac.sharedDirector.convertEventToGL (evt);
+			Vector2 point = evt.mouseLocation;
 			return convertToNodeSpaceAR(point);
 		}
-		#endif
-
 		#endregion
 
 		#region edtior features

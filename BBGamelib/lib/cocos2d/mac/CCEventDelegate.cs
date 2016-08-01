@@ -1,5 +1,3 @@
-
-#if UNITY_STANDALONE || UNITY_WEBGL
 using UnityEngine;
 using System.Collections;
 using System;
@@ -53,5 +51,4 @@ namespace BBGamelib{
 	}
 	#endregion
 }
-#endif
 

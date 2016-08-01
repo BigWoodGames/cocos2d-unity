@@ -17,7 +17,7 @@ namespace BBGamelib{
 		public static string ReadTextFileFromResources(string path, ZipDelegate zip=null){
 			string result = null;
 			if (Application.isPlaying) {
-				NSUtils.Assert (path.EndsWith (".txt"), "NSCollection: Text file in Resources folder must be '*.txt' format!");
+				NSUtils.Assert (path.EndsWith (".txt"), "FileUtils: Text file in Resources folder must be '*.txt' format!");
 				string ext = Path.GetExtension(path);
 				path = path.Replace (ext, "");
 				TextAsset txt = Resources.Load<TextAsset> (path);
@@ -38,7 +38,7 @@ namespace BBGamelib{
 			if (filePath.Contains("://")) {
 				result = ReadTextFileFromURL(filePath, zip);
 			} else{
-				result = ReadStringFromPath(path);
+				result = ReadStringFromPath(filePath);
 				if (zip != null)
 					result = zip.unZip (result);
 			}
@@ -53,7 +53,21 @@ namespace BBGamelib{
 				text = zip.unZip (text);
 			return text;
 		}
+
 		
+		//StreamingAssets
+		public static byte[] ReadBytesFromStreamAssets(string file){
+			string filePath = System.IO.Path.Combine(Application.streamingAssetsPath, file);
+			byte[] result = null;
+			if (filePath.Contains("://")) {
+				WWW www = new WWW(filePath);
+				while(!www.isDone){}
+				result = www.bytes;
+			} else
+				result = System.IO.File.ReadAllBytes(filePath);
+			return result;
+		}
+
 		#if USE_FileIO
 		public static string ReadTextFileFromExternal(string path, ZipDelegate zip=null){
 			string result = null;

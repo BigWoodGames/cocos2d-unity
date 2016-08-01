@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace BBGamelib{
 	public class CCLabelContent
@@ -11,7 +12,8 @@ namespace BBGamelib{
 		public MeshRenderer renderer{get{return gear.components[0] as MeshRenderer;}}
 		public TextMesh mesh{get{return gear.components[1] as TextMesh;}}
 		public Transform transform{get{return gameObject.transform;}}
-		
+		//unity font material
+		public Material defaultMaterial;
 		public CCLabelContent(){
 			gear = CCFactory.Instance.takeGear (CCFactory.KEY_LABEL);
 			gear.gameObject.name = "content";
@@ -20,6 +22,8 @@ namespace BBGamelib{
 			mesh.characterSize = 0.05f; 
 			mesh.anchor = TextAnchor.MiddleCenter;
 			mesh.alignment = TextAlignment.Center;
+			this.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
+			this.defaultMaterial = this.renderer.material;
 		}
 	}
 
@@ -112,6 +116,10 @@ namespace BBGamelib{
 			this.fontName = getFontName(fontName);
 			this.fontSize = fontSize;
 			this.text = text;
+		}
+
+		public CCLabelContent content{
+			get{ return _content; }
 		}
 
 		public string text{
@@ -236,17 +244,22 @@ namespace BBGamelib{
 		protected override void recycleGear ()
 		{
 			base.recycleGear ();
+			_content.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
+			_content.renderer.material = _content.defaultMaterial;
+			_content.renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
 			CCFactory.Instance.recycleGear (CCFactory.KEY_LABEL, _content.gear);
 		}
 
 		// Helper
 		protected bool updateTexture()
 		{				
-			if (FloatUtils.EQ(_dimensions.x , 0) || FloatUtils.EQ(_dimensions.y , 0)) {
+			if (FloatUtils.EQ(_dimensions.x , 0)) {
 				_content.mesh.text = _text;
-				this.contentSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
+				Bounds localBounds = getLocalbounds();
+				Vector2 textSize = ccUtils.UnitsToPixels (localBounds.size);
+				this.contentSize = textSize;
 			} else {
-				string finalText = "";
+				StringBuilder finalText = new StringBuilder();
 				string originalText = _text;
 				int preEmptyCharIndex = -1;
 				for(int i=1; i<=originalText.Length; i++){
@@ -256,31 +269,32 @@ namespace BBGamelib{
 					}
 					string tmpStr = originalText.Substring(0, i);
 					if(c == '\n'){
-						finalText += tmpStr;
+						finalText.Append(tmpStr);
 						originalText = originalText.Substring(i);
 						i = 0;
+						preEmptyCharIndex = -1;
 					}
 
 					_content.mesh.text = tmpStr;
-					Vector2 csize = _content.renderer.bounds.size;
-					csize = ccUtils.UnitsToPixels(csize);
+					Bounds localBounds = getLocalbounds();
+					Vector2 csize = ccUtils.UnitsToPixels (localBounds.size);
 					if(FloatUtils.Big(csize.x , _dimensions.x)){
 						if(preEmptyCharIndex==-1)
-							tmpStr = originalText.Substring(0, i);
+							tmpStr = originalText.Substring(0, --i);
 						else{
 							tmpStr = originalText.Substring(0, preEmptyCharIndex);
 							i = preEmptyCharIndex + 1;
 							preEmptyCharIndex = -1;
 						}
-						finalText += tmpStr;
+						finalText.Append(tmpStr);
 						if(i<originalText.Length){
-							finalText += "\n";
+							finalText.Append("\n");
 							originalText = originalText.Substring(i);
 							i = 0;
 						}
 					}else if(i==originalText.Length){
 						tmpStr = originalText.Substring(0, i);
-						finalText += tmpStr;
+						finalText.Append(tmpStr);
 						break;
 					}
 
@@ -300,8 +314,10 @@ namespace BBGamelib{
 //						}
 //					}
 				}
-				_content.mesh.text = finalText;
-				this.contentSize = _dimensions;
+				_content.mesh.text = finalText.ToString();
+				Bounds bounds = getLocalbounds();
+				Vector2 textSize = ccUtils.UnitsToPixels (bounds.size);
+				this.contentSize = textSize;
 			}
 			_isContentDirty = true;
 			
@@ -345,24 +361,21 @@ namespace BBGamelib{
 
 		
 		#region CCLabelTTF - updateTransform
-		
 		public override void updateTransform ()
 		{
 			base.updateTransform ();
 			if (_isContentDirty) {
 				Vector2 contentPosition = _contentSize / 2;
+				Bounds localBounds = getLocalbounds();
+				Vector2 textSize = ccUtils.UnitsToPixels (localBounds.size);
 				if(verticalAlignment == CCVerticalTextAlignment.Top){
-					Vector2 textSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
 					contentPosition.y = _contentSize.y - textSize.y/2;
 				}else if(verticalAlignment == CCVerticalTextAlignment.Bottom){
-					Vector2 textSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
 					contentPosition.y = textSize.y/2;
 				}
 				if(horizontalAlignment == CCTextAlignment.Right){
-					Vector2 textSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
 					contentPosition.x = _contentSize.x - textSize.x/2;
 				}else if(horizontalAlignment == CCTextAlignment.Left){
-					Vector2 textSize = ccUtils.UnitsToPixels (_content.renderer.bounds.size);
 					contentPosition.x = textSize.x/2;
 				}
 
@@ -386,7 +399,6 @@ namespace BBGamelib{
 				_isContentDirty = false;
 			}
 		}
-
 		#endregion
 		
 		#region CCLabelTTF - RGBA protocol
@@ -396,9 +408,9 @@ namespace BBGamelib{
 			
 			// special opacity for premultiplied textures
 			if ( _opacityModifyRGB ) {
-				color4.r *= (byte)(_displayedOpacity/255.0f);
-				color4.g *= (byte)(_displayedOpacity/255.0f);
-				color4.b *= (byte)(_displayedOpacity/255.0f);
+				color4.r = (byte)(color4.r * _displayedOpacity/255.0f);
+				color4.g = (byte)(color4.g * _displayedOpacity/255.0f);
+				color4.b = (byte)(color4.b * _displayedOpacity/255.0f);
 			}
 			_quadColor = color4;
 			_content.mesh.color = _quadColor;
@@ -440,6 +452,14 @@ namespace BBGamelib{
 		}
 		
 		#endregion
+
+		public Bounds getLocalbounds(){
+			Bounds bounds = _content.renderer.bounds;
+
+			//Fixed: convert bounds to content space
+			bounds = cc3Utils.ConvertToLocalBounds(_content.transform, bounds);
+			return bounds;
+		}
 	}
 }
 

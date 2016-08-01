@@ -23,6 +23,10 @@ namespace BBGamelib{
 			bool equal = Mathf.Abs (b - a) < Epsilon;
 			return equal;
 		}
+
+		public static bool NEQ(float a, float b){
+			return !EQ(a, b);
+		}
 		
 		public static bool Big(float a, float b){
 			bool equal = EQ (a, b);

@@ -17,6 +17,7 @@ namespace BBGamelib{
 			gear.gameObject.transform.localPosition = Vector3.zero;
 //			gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			this.renderer.color = Color.white;
+			this.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
 		}
 	}
 	public class CCSprite : CCNodeRGBA, CCSpriteProtocol
@@ -166,6 +167,10 @@ namespace BBGamelib{
 			base.recycleGear ();
 			_content.renderer.sprite = null;
 			_content.renderer.color = Color.white;
+			_content.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
+			//reset default layer
+			_content.renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
+		
 			CCFactory.Instance.recycleGear (CCFactory.KEY_SPRITE, _content.gear);
 		}
 
@@ -217,6 +222,10 @@ namespace BBGamelib{
 		{
 			ccUtils.CC_INCREMENT_GL_DRAWS ();
 			_content.renderer.sortingOrder = CCDirector.sharedDirector.globolRendererSortingOrder ++;
+		}
+
+		public CCSpriteContent content{
+			get{ return _content;}
 		}
 		#endregion
 

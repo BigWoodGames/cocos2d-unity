@@ -25,6 +25,8 @@ namespace BBGamelib{
 		public const string KEY_LABEL = "CCFactory.LABEL";
 		#endregion
 
+		public const string LAYER_DEFAULT = "Default";
+
 		#region singleton
 		[SerializeField] [HideInInspector]private bool firstPassFlag=true;
 		static CCFactory _Instance=null;
@@ -42,7 +44,6 @@ namespace BBGamelib{
 				} else {
 					_Instance = this;
 				}
-				DontDestroyOnLoad (this.gameObject);
 			} 
 			if (firstPassFlag) {
 				gameObject.transform.position = Vector3.zero;
@@ -146,6 +147,7 @@ namespace BBGamelib{
 					}
 				}
 			}
+			gear.gameObject.layer = LayerMask.NameToLayer ("Default");
 			gear.gameObject.transform.parent = transform;
 			gear.gameObject.transform.localEulerAngles = Vector3.zero;
 			gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);

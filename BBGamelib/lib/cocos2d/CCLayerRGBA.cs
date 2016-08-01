@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 namespace BBGamelib{
-	/** CCLayerRGBA is a subclass of CCLayer that implements the CCRGBAProtocol protocol using a solid color as the background.
+	/** CCLayerRGBA is a subclass of CCLayer that implements the CCRGBAProtocol protocol. *IMPORTANT: unlike cocos2d-objc, there is no solid color background in this class.
 
 	 All features from CCLayer are valid, plus the following new features that propagate into children that conform to the CCRGBAProtocol:
 	 - opacity

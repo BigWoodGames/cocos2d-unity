@@ -104,7 +104,7 @@ namespace BBGamelib{
 		CCMenuItem  itemForTouch(UITouch  touch)
 		{
 			Vector2 touchLocation = touch.location;
-			touchLocation = CCDirector.sharedDirector.convertToGL(touchLocation);
+//			touchLocation = CCDirector.sharedDirector.convertToGL(touchLocation);
 
 			var enumerator = _children.GetEnumerator();
 			while (enumerator.MoveNext()) {

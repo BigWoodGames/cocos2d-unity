@@ -3,7 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace BBGamelib{
-	public class UTHash<K, T> : Dictionary<K, T> where T : class
+	/*
+	 * A fake utHash used to replace the real utHash in cocos2d-objc.
+	 */
+	public class utHash<K, T> : Dictionary<K, T> where T : class
 	{
 		public void HASH_DEL(K key){
 			Remove (key);
@@ -19,6 +22,15 @@ namespace BBGamelib{
 
 		public void HASH_ADD_INT(K key, T value){
 			Add (key, value);
+		}
+
+		public new T this[K key]{
+			get{
+				return HASH_FIND_INT (key);
+			}
+			set{
+				HASH_ADD_INT (key, value);
+			}
 		}
 	}
 }

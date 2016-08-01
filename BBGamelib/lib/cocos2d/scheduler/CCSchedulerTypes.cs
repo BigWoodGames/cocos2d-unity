@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace BBGamelib.scheduler{
 	public delegate void TICK_IMP(float ccTime); 
-
+	// A list double-linked list used for "updates with priority"
 	public class tListEntry{
 		public TICK_IMP impMethod;
 		public System.Object target;
@@ -14,8 +14,8 @@ namespace BBGamelib.scheduler{
 	}
 
 	public class tHashUpdateEntry{
-		public List<tListEntry> list;
-		public tListEntry entry;
+		public utList<tListEntry> list;
+		public utNode<tListEntry> entry;
 		public System.Object target;
 	}
 

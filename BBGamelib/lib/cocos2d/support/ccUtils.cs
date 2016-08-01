@@ -55,6 +55,14 @@ namespace BBGamelib{
 			return units * UIWindow.PIXEL_PER_UNIT;
 		}
 
+		public static Vector3 PixelsToUnits(Vector3 pixels){
+			return pixels / UIWindow.PIXEL_PER_UNIT;		
+		}
+		
+		public static Vector3 UnitsToPixels(Vector3 units){
+			return units * UIWindow.PIXEL_PER_UNIT;
+		}
+
 		public static float CC_DEGREES_TO_RADIANS(float degree)
 		{
 			return (float)(Math.PI * degree / 180.0);
@@ -102,6 +110,28 @@ namespace BBGamelib{
 					FloatUtils.Small(a.y , b.y + b.height); 
 		} 
 
+		public static GameObject GetChildObject(GameObject obj, string name){
+			for(int i=0; i<obj.transform.childCount; i++){
+				GameObject child = obj.transform.GetChild(i).gameObject;
+				if(child.name == name){
+					return child;
+				}
+			}
+			return null;
+		}
+		public static GameObject GetChildObjectRecursively(GameObject obj, string name){
+			for(int i=0; i<obj.transform.childCount; i++){
+				GameObject child = obj.transform.GetChild(i).gameObject;
+				if(child.name == name){
+					return child;
+				}
+				child = GetChildObjectRecursively(child, name);
+				if(child != null){
+					return child;
+				}
+			}
+			return null;
+		}
 
 		private static Texture2D _staticRectTexture;
 		private static GUIStyle _staticRectStyle;

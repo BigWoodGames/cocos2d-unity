@@ -34,7 +34,6 @@ namespace BBGamelib{
 			} else {
 				_Instance = this;
 			}
-			DontDestroyOnLoad (this.gameObject);
 			if (Application.isPlaying) {
 				_backgroundMusicVolume = 1;
 				_effectsVolume = 1;

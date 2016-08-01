@@ -11,7 +11,6 @@ namespace BBGamelib{
 		public const float PIXEL_PER_UNIT = 100.0f;
 		
 		Rect _bounds;
-		[SerializeField] BoxCollider2D _collider;
 		[SerializeField] UIViewController _rootViewController;
 
 		#region singleton
@@ -31,12 +30,10 @@ namespace BBGamelib{
 				} else {
 					_Instance = this;
 				}
-				DontDestroyOnLoad (this.gameObject);
 			} 
 			if (firstPassFlag) {
 				gameObject.transform.position = Vector3.zero;
 				gameObject.name = "UIWindow";
-				_collider = gameObject.AddComponent<BoxCollider2D>();
 				firstPassFlag = false;
 			}
 		}
@@ -48,19 +45,14 @@ namespace BBGamelib{
 			float wInPixels = hInPixels * Camera.main.aspect;
 			float h = hInPixels / PIXEL_PER_UNIT;
 			float w = wInPixels / PIXEL_PER_UNIT;
-
-			Rect boundsInUnits = new Rect (-w / 2, -h / 2, w, h);
 			Rect boundsInPixels = new Rect (-wInPixels / 2, -hInPixels / 2, wInPixels, hInPixels);
-
-			#if UNITY_4_5 || UNITY_4_6
-			_collider.center = (boundsInUnits.position + boundsInUnits.size * 0.5f);
-			#else
-			_collider.offset = (boundsInUnits.position + boundsInUnits.size * 0.5f);
-			#endif
-			_collider.size = boundsInUnits.size;
 			_bounds = boundsInPixels;
 
 			Camera.main.orthographicSize = h / 2;
+			Vector3 cameraPos = Camera.main.transform.position;
+			cameraPos.x = w / 2;
+			cameraPos.y = h / 2;
+			Camera.main.transform.position = cameraPos;
 		}
 		
 		public Rect bounds {
@@ -92,7 +84,9 @@ namespace BBGamelib{
 					UITouch uiTouch = new UITouch ();
 					uiTouch.fingerId = touch.fingerId;
 					uiTouch.phase = touch.phase;
-					uiTouch.location = Camera.main.ScreenToWorldPoint (touch.position) * PIXEL_PER_UNIT;
+					Vector3 p = Input.mousePosition;
+					p.z = -Camera.main.transform.position.z;
+					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = touch.tapCount;
 					uiTouch.timestamp = DateTime.Now;
 					if (touch.phase == TouchPhase.Began) {
@@ -110,13 +104,15 @@ namespace BBGamelib{
 					}
 				} 
 			} else {
-//				#if UNITY_EDITOR
+				#if UNITY_EDITOR
 				#if UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_WP8_1
 				if(Input.GetMouseButtonDown(0)){
 					UITouch uiTouch = new UITouch();
 					uiTouch.fingerId = UITouch.SINGLE_TOUCH_ID;
 					uiTouch.phase = TouchPhase.Began;
-					uiTouch.location = Camera.main.ScreenToWorldPoint(Input.mousePosition) * PIXEL_PER_UNIT;
+					Vector3 p = Input.mousePosition;
+					p.z = -Camera.main.transform.position.z;
+					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = 1;
 					uiTouch.timestamp = DateTime.Now;
 					
@@ -126,7 +122,9 @@ namespace BBGamelib{
 					UITouch uiTouch = new UITouch();
 					uiTouch.fingerId = UITouch.SINGLE_TOUCH_ID;
 					uiTouch.phase = TouchPhase.Ended;
-					uiTouch.location = Camera.main.ScreenToWorldPoint(Input.mousePosition) * PIXEL_PER_UNIT;
+					Vector3 p = Input.mousePosition;
+					p.z = -Camera.main.transform.position.z;
+					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = 1;
 					uiTouch.timestamp = DateTime.Now;
 					
@@ -136,7 +134,9 @@ namespace BBGamelib{
 					UITouch uiTouch = new UITouch();
 					uiTouch.fingerId = UITouch.SINGLE_TOUCH_ID;
 					uiTouch.phase = TouchPhase.Moved;
-					uiTouch.location = Camera.main.ScreenToWorldPoint(Input.mousePosition) * PIXEL_PER_UNIT;
+					Vector3 p = Input.mousePosition;
+					p.z = -Camera.main.transform.position.z;
+					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = 1;
 					uiTouch.timestamp = DateTime.Now;
 					
@@ -144,7 +144,7 @@ namespace BBGamelib{
 					hasTouchesMoved = true;
 				}
 				#endif
-//				#endif
+				#endif
 			}
 			if (hasTouchesBegan)
 				_rootViewController.view.touchesBegan (touchesBegan);

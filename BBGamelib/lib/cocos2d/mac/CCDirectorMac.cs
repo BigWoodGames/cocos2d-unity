@@ -32,7 +32,7 @@ namespace BBGamelib{
 		public Vector2 convertEventToGL(NSEvent evt)
 		{
 			Vector2 uiPoint = evt.mouseLocation;
-			return convertToGL(uiPoint);
+			return uiPoint;
 		}
 
 		public override UIView view {

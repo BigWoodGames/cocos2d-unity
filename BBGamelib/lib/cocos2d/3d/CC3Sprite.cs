@@ -6,16 +6,14 @@ using System;
 using System.Linq;
 
 namespace BBGamelib{
-	public class CC3Sprite : CC3Node
+	public class CC3Sprite : CC3Prefab
 	{
 		public enum kFrameEventMode{
 			LabelFrame,
 			EveryFrame,
 		}
 		public delegate void Callback(CC3Sprite spt);
-		string _path;
 		float _fpsScale;
-		GameObject _fbxObject;
 		Animation _fbxAnimation;
 		AnimationState _currentAnimationState;
 		int _currentFrame;
@@ -25,27 +23,16 @@ namespace BBGamelib{
 		bool _loop;
 		int _startFrame;
 		int _endFrame;
-		Bounds _bounds;
-		bool _isBoundsDirty;
 		Callback _endCall;
 		Callback _frameEventCall;
 		kFrameEventMode _frameEventMode;
-
-		bool _opacityModifyRGB;
-		Color _quadColor;
-		Renderer[] _renderers;
-		Color32[] _originalColors;
 		bool _isRuningAnimation;
 
 		Dictionary<string, AnimationClip> _clips;
-		bool _reused;
-
 		Dictionary<string, Dictionary<int, List<string>>> _allLabels;
 
 		public bool loop{get{return _loop;} set{_loop=value;}}
 		public float rotationZ{get{return _rotation;} set{_rotation=value;}}
-		public GameObject fbxObject{get{return _fbxObject;}}
-
 		public string currentAnimeName{get{return _currentAnimationState==null?null:_currentAnimationState.name;}}
 		public int currentFrame{get{return _currentFrame;}}
 		public List<string> currentLabels{get{return _currentLabels;}}
@@ -54,26 +41,15 @@ namespace BBGamelib{
 		public Callback frameEventCall{get{return _frameEventCall;}set{_frameEventCall=value;}}
 		public kFrameEventMode frameEventMode{get{return _frameEventMode;} set{_frameEventMode = value;}}
 
-		public CC3Sprite(string path){
-			_path = path;
-			_fbxObject = CC3SpriteFactory.Instance.getPrefabObject (path, true);
-			_fbxObject.transform.parent = this.transform;
-			_fbxObject.transform.localPosition = Vector3.zero;
-			_fbxObject.transform.localEulerAngles = Vector3.zero;
-			_fbxObject.transform.localScale = new Vector3 (1, 1, 1);
-			
-			_fbxAnimation = _fbxObject.GetComponent<Animation>();
+		public CC3Sprite(string path) : base(path)
+		{
+			_fbxAnimation = _prefabObj.GetComponent<Animation>();
 			_fpsScale = 1;
 			_loop = false;
 			scheduleUpdateWithPriority ();
-			_isBoundsDirty = true;
-			_bounds = new Bounds (Vector3.zero, Vector3.zero);
 			_currentLabels = null;
-			_opacityModifyRGB = true;
-			_quadColor = new Color32 (255, 255, 255, 255);
 			_frameEventMode = kFrameEventMode.LabelFrame;
 			_isRuningAnimation = false;
-			_reused = true;
 			_allLabels = new Dictionary<string, Dictionary<int, List<string>>>  ();
 		}
 		
@@ -177,13 +153,6 @@ namespace BBGamelib{
 			}
 		}
 
-
-		public bool resued{
-			get{ return _reused;}
-			set{ _reused = value;}
-		}
-
-
 		void setAnimationState(string name){
 			NSUtils.Assert (_fbxAnimation != null, "animation of {0} is null.", name);
 			if (name == currentAnimeName) {
@@ -255,8 +224,8 @@ namespace BBGamelib{
 			if (!this.visible) {
 				return;
 			}
-
-			_fbxAnimation.Play(_currentAnimationState.name);
+			if(_fbxAnimation.clip.name != _currentAnimationState.name)
+				_fbxAnimation.Play(_currentAnimationState.name);
 			float realElapsed = _elapsed * _fpsScale;
 			int toFrame = Mathf.FloorToInt(realElapsed * _currentAnimationState.clip.frameRate) + _startFrame;
 			if (_loop) {
@@ -291,159 +260,5 @@ namespace BBGamelib{
 				}
 			}
 		}
-
-		public override void cleanup ()
-		{
-			if (_originalColors != null) {
-				for (int i=renderers.Length-1; i>=0; i--) {
-					var renderer = renderers [i];
-					if (renderer.material.HasProperty ("_Color")) {
-						renderer.material.color = _originalColors [i];
-					}
-				}
-			}
-			//reset default layer
-			for (int i=renderers.Length-1; i>=0; i--) {
-				var renderer = renderers [i];
-				renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
-				renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
-			}
-			base.cleanup ();
-			if (_reused) {
-				CC3SpriteFactory.Instance.recyclePrefabObject (_path, _fbxObject);
-			} else {
-				if(Application.isEditor)
-					UnityEngine.Object.DestroyImmediate(_fbxObject, true);
-				else
-					UnityEngine.Object.Destroy(_fbxObject);
-			}
-			_fbxObject = null;
-		}
-
-		/*Get the child object with specified name under fbx object.*/
-		public GameObject getChildObject(string name){
-			return ccUtils.GetChildObject(_fbxObject, name);
-		}
-
-		public Bounds getLocalbounds(bool recalculateIfNeed=true){
-			if (_isBoundsDirty && recalculateIfNeed) {
-				var bounds = calculateLocalBounds(this.renderers);
-				bounds.center *= UIWindow.PIXEL_PER_UNIT;
-				bounds.size *= UIWindow.PIXEL_PER_UNIT;
-				_bounds = bounds;
-				_isBoundsDirty = false;
-			}
-			//Fixed: convert bounds to content space
-			return _bounds;
-		}
-
-	
-		public Bounds getLocalbounds<T>() where T:Renderer{
-			T[] renderers = this.gameObject.GetComponentsInChildren<T> ();
-			if (renderers.Length == 0)
-				return new Bounds();
-			var combinedBounds = calculateLocalBounds (renderers);
-			combinedBounds.center *= UIWindow.PIXEL_PER_UNIT;
-			combinedBounds.size *= UIWindow.PIXEL_PER_UNIT;
-			return combinedBounds;
-		}
-
-		Bounds calculateLocalBounds(Renderer[] renderers){
-			var combinedBounds = renderers [0].bounds;
-			for (int i=renderers.Length-1; i>0; i--) {
-				var renderer = renderers [i];
-				if(renderer.gameObject.activeSelf)
-					combinedBounds.Encapsulate (renderer.bounds);
-			}
-
-			combinedBounds = cc3Utils.ConvertToLocalBounds (this.transform, combinedBounds);
-			return combinedBounds;
-		}
-
-		
-		public Renderer[] renderers{
-			get{
-				if(_renderers==null){
-					_renderers = this.gameObject.GetComponentsInChildren<Renderer> (true);
-                }
-                return _renderers;
-            }
-        }
-
-		#region CCSprite - RGBA protocol
-		protected override void draw ()
-		{
-			ccUtils.CC_INCREMENT_GL_DRAWS ();
-			
-			Renderer[] rs = this.renderers;
-			for (int i=0; i<rs.Length; i++) {
-				rs [i].sortingOrder = CCDirector.sharedDirector.globolRendererSortingOrder;
-			}
-			CCDirector.sharedDirector.globolRendererSortingOrder ++;
-		}
-		public void updateColor()
-		{
-			Color32 color4 = new Color32(_displayedColor.r, _displayedColor.g, _displayedColor.b, _displayedOpacity);
-			
-			// special opacity for premultiplied textures
-			if ( _opacityModifyRGB ) {
-				color4.r = (byte)(color4.r * _displayedOpacity/255.0f);
-				color4.g = (byte)(color4.g * _displayedOpacity/255.0f);
-				color4.b = (byte)(color4.b * _displayedOpacity/255.0f);
-			}
-			_quadColor = color4;
-			Renderer[] renderers = this.renderers;
-			
-			if(_originalColors == null){
-				_originalColors = new Color32[_renderers.Length];
-				for(int i=_originalColors.Length-1; i>=0;i--){
-					if(_renderers[i].material.HasProperty("_Color"))
-						_originalColors[i] = _renderers[i].material.color;
-				}
-			}
-			for (int i=renderers.Length-1; i>=0; i--) {
-				var renderer = renderers [i];
-				if(renderer.material.HasProperty("_Color")){
-					renderer.material.color = _originalColors[i] * _quadColor;
-				}
-			}
-		}
-		
-		public override Color32 color {
-			set {
-				base.color = value;
-				updateColor();
-			}
-		}
-		
-		public override void updateDisplayedColor (Color32 parentColor)
-		{
-			base.updateDisplayedColor (parentColor);
-			updateColor ();
-		}
-		
-		public override byte opacity {
-			set {
-				base.opacity = value;
-				updateColor();
-			}
-		}
-		public override bool opacityModifyRGB{
-			get{return _opacityModifyRGB;}
-			set{
-				if( _opacityModifyRGB != value ) {
-					_opacityModifyRGB = value;
-					updateColor();
-				}
-			}
-		}
-		
-		public override void updateDisplayedOpacity (byte parentOpacity)
-		{
-			base.updateDisplayedOpacity (parentOpacity);
-			updateColor ();
-		}
-		
-		#endregion
 	}
 }

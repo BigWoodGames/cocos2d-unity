@@ -91,7 +91,7 @@ namespace BBGamelib{
 			for(int i=0; i<num; i++){
 				CCFactoryGear gear = buildGear(componentTypes);
 				gear.gameObject.name = string.Format("{0}-{1}", category, i);
-				gear.gameObject.transform.parent = transform;
+				gear.gameObject.transform.SetParent(transform);
 				gear.gameObject.hideFlags = HideFlags.HideInHierarchy;
 				gear.gameObject.SetActive(false);
 				storage.gears.Add(gear);
@@ -148,7 +148,7 @@ namespace BBGamelib{
 				}
 			}
 			gear.gameObject.layer = LayerMask.NameToLayer ("Default");
-			gear.gameObject.transform.parent = transform;
+			gear.gameObject.transform.SetParent(transform);
 			gear.gameObject.transform.localEulerAngles = Vector3.zero;
 			gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			gear.gameObject.transform.localPosition = Vector3.zero;

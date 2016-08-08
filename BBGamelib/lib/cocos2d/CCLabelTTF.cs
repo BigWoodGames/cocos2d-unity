@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System;
 
 namespace BBGamelib{
 	public class CCLabelContent
@@ -251,8 +252,12 @@ namespace BBGamelib{
 		}
 
 		// Helper
-		protected bool updateTexture()
-		{				
+		protected void updateTexture()
+		{			
+			if (string.IsNullOrEmpty (_text)) {
+				_content.mesh.text = _text;
+				return;
+			}
 			if (FloatUtils.EQ(_dimensions.x , 0)) {
 				_content.mesh.text = _text;
 				Bounds localBounds = getLocalbounds();
@@ -320,8 +325,6 @@ namespace BBGamelib{
 				this.contentSize = textSize;
 			}
 			_isContentDirty = true;
-			
-			return true;
 		}
 
 		protected override void draw ()

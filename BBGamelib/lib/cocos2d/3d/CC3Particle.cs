@@ -6,16 +6,20 @@ namespace BBGamelib{
 		public delegate void Callback(CC3ParticleController ctr);
 		Callback _callback;
 		ParticleSystem _particle;
+		bool _running;
 		public Callback callback{get{ return _callback;}set{_callback = value;}}
 		public ParticleSystem particleSystem{get{return _particle;}}
+		public bool running{ get { return _running; } }
 
 		public CC3ParticleController(ParticleSystem particle){
 			_particle = particle;
 			_particle.Stop (true);
 			_particle.gameObject.SetActive (false);
+			_running = false;
 		}
 
 		public void play(){
+			_running = true;
 			_particle.gameObject.SetActive (true);
 			_particle.Play ();
 			CCDirector.sharedDirector.scheduler.schedule (this.update, this, 0, CCScheduler.kCCRepeatForever, false);
@@ -29,6 +33,7 @@ namespace BBGamelib{
 		{
 			if(_particle == null || !_particle.IsAlive() || _particle.isStopped )
 			{
+				_running = false;
 				CCDirector.sharedDirector.scheduler.unscheduleSelector (this.update, this);
 				if(_callback!=null){
 					_callback(this);
@@ -37,95 +42,71 @@ namespace BBGamelib{
 		}
 
 	}
-	public class CC3Particle : CC3Node
+	public class CC3Particle : CC3Prefab
 	{
 		public delegate void Callback(CC3Particle spt);
-		CC3ParticleController _controller;
-		string _path;
 		bool _isAutoDestory;
 		Callback _callback;
-		GameObject _prefabObj;
-		ParticleSystem[] _particleSystems;
-		Renderer[] _renderers;
+		CC3ParticleController[] _controllers;
+
 		public bool isAutoDestory{get{ return _isAutoDestory;}set{_isAutoDestory = value;}}
 		public Callback callback{get{ return _callback;}set{_callback = value;}}
-		public ParticleSystem particleSystem{get{return _controller.particleSystem;}}
-		public CC3Particle(string path){
-			_path = path;
+
+		public CC3Particle(string path) : base(path)
+		{
 			_isAutoDestory = true;
 			_callback = null;
-			_prefabObj = CC3SpriteFactory.Instance.getPrefabObject (path, true);
-			NSUtils.Assert (_prefabObj != null, "CC3Particle : Prefab not found at path {0}.", path);
-			ParticleSystem particle = _prefabObj.GetComponent<ParticleSystem>();
-			NSUtils.Assert (particle != null, "CC3Particle : ParticleSystem not found at path {0}.", path);
+			NSUtils.Assert (this.particleSystems != null && this.particleSystems.Length != 0, "CC3Particle({0}): ParticleSystem not found at path {1}.", this.gameObject.activeSelf, _path);
 
-			_prefabObj.transform.parent = this.transform;
-			_prefabObj.transform.localPosition = Vector3.zero;
-			_prefabObj.transform.localEulerAngles = Vector3.zero;
-			_prefabObj.transform.localScale = new Vector3 (1, 1, 1);
-
-			_controller = new CC3ParticleController (particle);
-			_controller.callback = onControllerCallback;
+			_controllers = new CC3ParticleController[this.particleSystems.Length];
+			for (int i=0; i<_controllers.Length; i++) {
+				_controllers[i] = new CC3ParticleController (this.particleSystems[i]);
+				_controllers[i].callback = onControllerCallback;
+			}
 		}
-		public CC3Particle(GameObject obj){
-			_path = obj.name;
+		public CC3Particle (GameObject obj) : base(obj)
+		{
 			_isAutoDestory = true;
 			_callback = null;
-			_prefabObj = obj;
-			ParticleSystem particle = _prefabObj.GetComponent<ParticleSystem>();
-			NSUtils.Assert (particle != null, "CC3Particle : ParticleSystem not found at path {0}.", _path);
+			NSUtils.Assert (this.particleSystems != null && this.particleSystems.Length != 0, "CC3Particle({0}): ParticleSystem not found at path {1}.", this.gameObject.activeSelf,  _path);
 
-			_prefabObj.transform.parent = this.transform;
-			_prefabObj.transform.localPosition = Vector3.zero;
-			_prefabObj.transform.localEulerAngles = Vector3.zero;
-			_prefabObj.transform.localScale = new Vector3 (1, 1, 1);
-			_controller = new CC3ParticleController (particle);
-			_controller.callback = onControllerCallback;
+			_controllers = new CC3ParticleController[this.particleSystems.Length];
+			for (int i=0; i<_controllers.Length; i++) {
+				_controllers[i] = new CC3ParticleController (this.particleSystems[i]);
+				_controllers[i].callback = onControllerCallback;
+			}
 		}
 
 		public void play(){
-			_controller.play ();
+			for (int i=0; i<_controllers.Length; i++) {
+				_controllers[i].play();
+			}
 		}
 
 		void onControllerCallback(CC3ParticleController ctr){
-			if(_callback!=null){
-				_callback(this);
+			bool hasRunning = false;
+			for (int i=0; i<_controllers.Length; i++) {
+				if(_controllers[i].running){
+					hasRunning = true;
+					break;
+				}
 			}
-			if(_isAutoDestory){
-				removeFromParentAndCleanup(true);
+			if (!hasRunning) {
+				if (_callback != null) {
+					_callback (this);
+				}
+				if (_isAutoDestory) {
+					removeFromParentAndCleanup (true);
+				}
 			}
 		}
 
 		public override void cleanup ()
 		{
+			for (int i=0; i<_controllers.Length; i++) {
+				_controllers[i].stop();
+			}
 			base.cleanup ();
-			_controller.stop ();
-			//reset default layer
-			for (int i=renderers.Length-1; i>=0; i--) {
-				var renderer = renderers [i];
-				renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
-				renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
-			}
-			CC3SpriteFactory.Instance.recyclePrefabObject (_path, _prefabObj);
-		}
-		
-		public Renderer[] renderers{
-			get{
-				if(_renderers==null){
-					_renderers = this.gameObject.GetComponentsInChildren<Renderer> (true);
-				}
-				return _renderers;
-			}
-		}
-		protected override void draw ()
-		{
-			ccUtils.CC_INCREMENT_GL_DRAWS ();
-			
-			Renderer[] rs = this.renderers;
-			for (int i=0; i<rs.Length; i++) {
-				rs [i].sortingOrder = CCDirector.sharedDirector.globolRendererSortingOrder;
-			}
-			CCDirector.sharedDirector.globolRendererSortingOrder ++;
 		}
 	}
 }

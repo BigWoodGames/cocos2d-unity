@@ -40,7 +40,8 @@ namespace BBGamelib{
 		public void preloadPrefab(string path){
 			if (!_prefabs.ContainsKey (path)) {
 				UnityEngine.Object obj = Resources.Load (path);
-				NSUtils.Assert(obj != null, "CC3SpriteFactory#preloadPrefab: {0} not found.", path);
+				if(obj == null)
+					CCDebug.Warning("CC3SpriteFactory#preloadPrefab: {0} not found.", path);
 				_prefabs[path] = obj;
 			}
 		}
@@ -52,7 +53,8 @@ namespace BBGamelib{
 		public void preloadAnimationClips(string path){
 			if (!_animationClips.ContainsKey (path)) {
 				AnimationClip[] obj = Resources.LoadAll<AnimationClip> (path);
-				NSUtils.Assert(obj != null, "CC3SpriteFactory#preloadAnimationClips: {0} not found.", path);
+				if(obj == null)
+					CCDebug.Warning("CC3SpriteFactory#preloadAnimationClips: {0} not found.", path);
 				_animationClips[path] = obj;
 			}
 		}
@@ -118,7 +120,8 @@ namespace BBGamelib{
 					preloadPrefab(path);
 					prefab = _prefabs[path];
 				}
-				NSUtils.Assert (prefab != null, "CC3SpriteFactory {0} not found.", path);
+				if(prefab == null)
+					CCDebug.Warning ("CC3SpriteFactory {0} not found.", path);
 				GameObject obj = Instantiate(prefab) as GameObject; 
 				return obj;
 			}

@@ -148,7 +148,7 @@ namespace BBGamelib{
 				}
 			}
 			gear.gameObject.layer = LayerMask.NameToLayer ("Default");
-			gear.gameObject.transform.SetParent(transform);
+			gear.gameObject.transform.SetParent(this.transform);
 			gear.gameObject.transform.localEulerAngles = Vector3.zero;
 			gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			gear.gameObject.transform.localPosition = Vector3.zero;

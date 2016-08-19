@@ -63,12 +63,12 @@ namespace BBGamelib{
 	//
 	// ScaleBy
 	//
-	#region mark - CCScaleBy3D
-	public class CCScaleBy3D : CC3ScaleTo
+	#region mark - CCScaleBy
+	public class CC3ScaleBy : CC3ScaleTo
 	{
-		public CCScaleBy3D(float t, float scale):base(t, scale){
+		public CC3ScaleBy(float t, float scale):base(t, scale){
 		}
-		public CCScaleBy3D(float t, float scaleX, float scaleY, float scaleZ):base(t, scaleX, scaleY, scaleZ){
+		public CC3ScaleBy(float t, float scaleX, float scaleY, float scaleZ):base(t, scaleX, scaleY, scaleZ){
 		}
 		public override void startWithTarget (object aTarget)
 		{
@@ -79,12 +79,12 @@ namespace BBGamelib{
 		}
 		protected override CCAction copyImpl ()
 		{
-			CCScaleBy3D act = new CCScaleBy3D(this.duration, _endScaleX, _endScaleY, _endScaleZ);
+			CC3ScaleBy act = new CC3ScaleBy(this.duration, _endScaleX, _endScaleY, _endScaleZ);
 			return act;
 		}
 		protected override CCAction reverseImpl ()
 		{
-			CCScaleBy3D act = new CCScaleBy3D (_duration, 1/_endScaleX, 1/_endScaleY, 1/_endScaleZ);
+			CC3ScaleBy act = new CC3ScaleBy (_duration, 1/_endScaleX, 1/_endScaleY, 1/_endScaleZ);
 			return act;
 		}
 	}

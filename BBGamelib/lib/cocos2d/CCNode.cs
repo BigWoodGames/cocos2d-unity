@@ -434,7 +434,7 @@ namespace BBGamelib{
 			set{
 				_parent = value;
 				if(value!=null)
-					gameObject.transform.parent = value.transform;
+					gameObject.transform.SetParent(value.transform, false);
 				else
 					gameObject.transform.parent = null;
 			}
@@ -947,7 +947,7 @@ namespace BBGamelib{
 		public void unscheduleAllSelectors(){
 			_scheduler.unscheduleAllForTarget (this);
 		}
-		public void  resumeSchedulerAndActions(){
+		public void resumeSchedulerAndActions(){
 			_scheduler.resumeTarget (this);
 			_actionManager.resumeTarget (this);
 		}

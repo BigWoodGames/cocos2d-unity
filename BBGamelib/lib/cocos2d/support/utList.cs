@@ -115,6 +115,21 @@ namespace BBGamelib{
 			add.obj = addT;
 			DL_REPLACE_ELEM (el, add);
 		}
+
+		public void DL_CONTACT(utList<T> list2){
+			var head1 = _head;
+			var head2 = list2.head;
+			if (head2 != null) {
+				if(head1 != null){
+					var tmp = head2.prev;
+					head2.prev = head1.prev;
+					head1.prev.next = head2;
+					head1.prev = tmp;
+				}else{
+					_head = head2;
+				}
+			}
+		}
 	}
 }
 

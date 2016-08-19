@@ -6,14 +6,17 @@ namespace BBGamelib{
 	{
 		protected GameObject _prefabObj;
 		protected string _path;
-		Renderer[] _renderers;
-		ParticleSystem[] _particleSystems;
+		protected Renderer[] _renderers;
+		protected ParticleSystem[] _particleSystems;
 		
-		bool _opacityModifyRGB;
-		Color _quadColor;
-		Color32[] _originalColors;
-		Color32[] _originalParticleColors;
-
+		protected bool _opacityModifyRGB;
+		protected Color _quadColor;
+		protected Color32[] _originalRendererColors;
+		protected Color32[] _originalParticleColors;
+		protected float[] _originalParticleTimes;
+		protected float[] _originalParticleStartSize;
+		protected float[] _originalParticleStartSpeed;
+		protected float[] _originalParticleGravityModifer;
 		protected Bounds _bounds;
 		protected bool _isBoundsDirty;
 		
@@ -51,6 +54,23 @@ namespace BBGamelib{
 			_bounds = new Bounds (Vector3.zero, Vector3.zero);
 			_reused = true;
 		}
+		
+		public virtual void pause(){
+			pauseSchedulerAndActions ();
+			if(this.particleSystems!=null){
+				for(int i=0; i<_particleSystems.Length; i++){
+					_particleSystems[i].Pause(true);
+				}
+			}
+		}
+		public virtual void resume(){
+			resumeSchedulerAndActions ();
+			if(_particleSystems!=null){
+				for(int i=0; i<_particleSystems.Length; i++){
+					_particleSystems[i].Play();
+				}
+			}
+		}
 
 		public string path{
 			get{ return _path;}
@@ -73,6 +93,11 @@ namespace BBGamelib{
 				return _renderers;
 			}
 		}
+		
+		
+		// ------------------------------------------------------------------------------
+		//  particles
+		// ------------------------------------------------------------------------------
 		public ParticleSystem particleSystem{
 				get{return (this.particleSystems == null || this.particleSystems.Length==0)? null :_particleSystems[0];}
 		}
@@ -81,11 +106,51 @@ namespace BBGamelib{
 			get{
 				if(_particleSystems==null){
 					_particleSystems = _prefabObj.GetComponentsInChildren<ParticleSystem>(true);
+					_originalParticleTimes = new float[this.particleSystems.Length];
+					_originalParticleStartSize = new float[this.particleSystems.Length];
+					_originalParticleStartSpeed = new float[this.particleSystems.Length];
+					_originalParticleGravityModifer = new float[this.particleSystems.Length];
+					for (int i = 0; i < this.particleSystems.Length; i++) {
+						_originalParticleTimes[i] = this.particleSystems[i].startLifetime;
+						_originalParticleStartSize[i] = this.particleSystems[i].startSize;
+						_originalParticleStartSpeed[i] = this.particleSystems[i].startSpeed;
+						_originalParticleGravityModifer[i] = this.particleSystems[i].gravityModifier;
+					}
 				}
 				return _particleSystems;
 			}
 		}
-		
+
+		void setParticleScale(float scale){
+			if(this.particleSystems != null){
+				for (int i = 0; i < this.particleSystems.Length; i++) {
+					this.particleSystems[i].startSize = scale * _originalParticleStartSize[i];
+					this.particleSystems[i].startSpeed = scale * _originalParticleStartSpeed[i];
+					this.particleSystems[i].gravityModifier = scale * _originalParticleGravityModifer[i];
+				}
+			}
+		}
+
+		public void toogleParticles(bool enable, string tgtName=null){
+			if (this.particleSystems != null) {
+				for (int i = 0; i < this.particleSystems.Length; i++) {
+					if (tgtName == null || this.particleSystems [i].gameObject.name == tgtName) {
+						if (enable) {
+							this.particleSystems [i].gameObject.SetActive (true);
+							this.particleSystems [i].Play ();
+							this.particleSystems [i].startLifetime = _originalParticleTimes [i];
+						} else {
+							this.particleSystems [i].Stop ();
+							this.particleSystems [i].startLifetime = 0;
+						}
+					}
+				}
+			}
+		}
+
+		// ------------------------------------------------------------------------------
+		//  utils
+		// ------------------------------------------------------------------------------
 		/*Get the child object with specified name under prefab object.*/
 		public GameObject getChildObject(string name){
 			return ccUtils.GetChildObject(_prefabObj, name);
@@ -124,7 +189,11 @@ namespace BBGamelib{
 			combinedBounds = cc3Utils.ConvertToLocalBounds (this.transform, combinedBounds);
 			return combinedBounds;
 		}
-
+		
+		
+		// ------------------------------------------------------------------------------
+		//  override
+		// ------------------------------------------------------------------------------
 		protected override void draw ()
 		{
 			ccUtils.CC_INCREMENT_GL_DRAWS ();
@@ -136,12 +205,33 @@ namespace BBGamelib{
 			CCDirector.sharedDirector.globolRendererSortingOrder ++;
 		}
 
+		public override void visit ()
+		{
+			base.visit ();
+			Vector3 scale =  transform.lossyScale;
+			if (scale != new Vector3(1, 1, 1)) {
+				float minScale = Mathf.Min(scale.x, Mathf.Min(scale.y, scale.z));
+				setParticleScale(minScale);
+			}
+		}
+
 		public override void cleanup ()
 		{
-			if (_originalColors != null) {
+			//reset renderers
+			if (_originalRendererColors != null) {
 				for (int i=renderers.Length-1; i>=0; i--) {
 					var renderer = renderers [i];
-					renderer.material.color = _originalColors [i];
+					renderer.material.color = _originalRendererColors [i];
+				}
+			}
+
+			//reset partcile systems
+			if (_originalParticleStartSize != null) {
+				setParticleScale (1);
+			}
+			if (_originalParticleTimes != null) {
+				for(int i=_originalParticleTimes.Length-1; i>=0;i--){
+					_particleSystems[i].startLifetime = _originalParticleTimes[i];
 				}
 			}
 			if(_originalParticleColors != null){
@@ -168,8 +258,11 @@ namespace BBGamelib{
 			}
 			_prefabObj = null;
 		}
-
-		#region CCSprite - RGBA protocol
+		
+		
+		// ------------------------------------------------------------------------------
+		//  RGBA protocol
+		// ------------------------------------------------------------------------------
 		public void updateColor()
 		{
 			Color32 color4 = new Color32(_displayedColor.r, _displayedColor.g, _displayedColor.b, _displayedOpacity);
@@ -182,11 +275,11 @@ namespace BBGamelib{
 			}
 			_quadColor = color4;
 			Renderer[] renderers = this.renderers;
-			if(_originalColors == null){
-				_originalColors = new Color32[_renderers.Length];
-				for(int i=_originalColors.Length-1; i>=0;i--){
+			if(_originalRendererColors == null){
+				_originalRendererColors = new Color32[_renderers.Length];
+				for(int i=_originalRendererColors.Length-1; i>=0;i--){
 					if(_renderers[i].material.HasProperty("_Color"))
-						_originalColors[i] = _renderers[i].material.color;
+						_originalRendererColors[i] = _renderers[i].material.color;
 				}
 			}
 			for (int i=renderers.Length-1; i>=0; i--) {
@@ -243,7 +336,5 @@ namespace BBGamelib{
 			base.updateDisplayedOpacity (parentOpacity);
 			updateColor ();
 		}
-		
-		#endregion
 	}
 }

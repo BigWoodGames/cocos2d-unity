@@ -32,7 +32,6 @@ namespace BBGamelib{
 		Dictionary<string, Dictionary<int, List<string>>> _allLabels;
 
 		public bool loop{get{return _loop;} set{_loop=value;}}
-		public float rotationZ{get{return _rotation;} set{_rotation=value;}}
 		public string currentAnimeName{get{return _currentAnimationState==null?null:_currentAnimationState.name;}}
 		public int currentFrame{get{return _currentFrame;}}
 		public List<string> currentLabels{get{return _currentLabels;}}
@@ -46,7 +45,7 @@ namespace BBGamelib{
 			_fbxAnimation = _prefabObj.GetComponent<Animation>();
 			_fpsScale = 1;
 			_loop = false;
-			scheduleUpdateWithPriority ();
+			schedule (updateFrame);
 			_currentLabels = null;
 			_frameEventMode = kFrameEventMode.LabelFrame;
 			_isRuningAnimation = false;
@@ -62,6 +61,10 @@ namespace BBGamelib{
 
 		public void setAnimation(string name){
 			setAnimationState (name);
+		}
+
+		public bool hasAnimation(string name){
+			return _fbxAnimation.GetClip (name) != null;
 		}
 
 		public void playAnimation(string name, Callback endCallback=null){
@@ -211,9 +214,8 @@ namespace BBGamelib{
 				}
 			}
 		}
-		public override void update (float dt)
+		protected virtual void updateFrame (float dt)
 		{
-			base.update (dt);
 			if (!_isRuningAnimation)
 				return;
 
@@ -221,11 +223,19 @@ namespace BBGamelib{
 				return;
 			}
 			_elapsed += dt;
-			if (!this.visible) {
+			bool visible = this.visible;
+			for (var p = this.parent; p!=null; p=p.parent) {
+				if(!p.visible){
+					visible = false;
+					break;
+				}
+			}
+			if (!visible) {
 				return;
 			}
-			if(_fbxAnimation.clip.name != _currentAnimationState.name)
-				_fbxAnimation.Play(_currentAnimationState.name);
+			if (_fbxAnimation.clip == null || _fbxAnimation.clip.name != _currentAnimationState.clip.name) {
+				_fbxAnimation.Play(_currentAnimationState.clip.name);
+			}
 			float realElapsed = _elapsed * _fpsScale;
 			int toFrame = Mathf.FloorToInt(realElapsed * _currentAnimationState.clip.frameRate) + _startFrame;
 			if (_loop) {

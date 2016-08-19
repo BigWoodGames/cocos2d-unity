@@ -49,6 +49,11 @@ namespace BBGamelib{
 				}
 			}
 		}
+		public float rotationZ{
+			get{return _rotation;}
+			set{this.rotation=value;}
+		}
+
 		public virtual kRotationSortingOrder rotationSortingOrder{
 			get{return _rotationSortingOrder;}
 			set{

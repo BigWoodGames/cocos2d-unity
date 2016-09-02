@@ -279,9 +279,10 @@ namespace BBGamelib{
 				if(_runningScene!=null)
 					_runningScene.visit();
 			}catch(Exception e){
-				CCDebug.Error(e.ToString());
+				CCDebug.Log(e.ToString());
 				if(_displayError){
 					_lastError = e;
+					throw e;
 				}else{
 					Application.Quit();
 				}

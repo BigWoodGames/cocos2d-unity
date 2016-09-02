@@ -55,13 +55,23 @@ namespace BBGamelib{
 		
 		#region properties
 		[Serializable]
-		class Storage{
+		public class Storage{
 			[SerializeField] public string category;
 			[SerializeField] public string[] componentTypeNames;
 			[SerializeField] public List<CCFactoryGear> gears = new List<CCFactoryGear>(); 
 		}
-		[Serializable]  class DictionaryOfStringAndStorage : NSSerializableDictionary<string, Storage> {}
+		[Serializable]public  class DictionaryOfStringAndStorage : NSSerializableDictionary<string, Storage> {}
 		[SerializeField] DictionaryOfStringAndStorage _storages = new DictionaryOfStringAndStorage();
+		/**
+		 public the storages for preloading
+		 example of how preload gear: 
+			splash scene:
+		 	gear.gameObject.SetActive (true); 
+		 	...
+		 	next frame:
+		 	gear.gameObject.SetActive (false); 
+		 */
+		public DictionaryOfStringAndStorage storages{ get { return _storages; } }
 		#endregion
 
 		
@@ -97,18 +107,23 @@ namespace BBGamelib{
 				storage.gears.Add(gear);
 			}
 		}
-
 		public CCFactoryGear takeGear(string category){
 			Storage storage = getStorage (category, false);
 			if (storage!=null) {
-				if(storage.gears.Count>0){
-//					return storage.gears.Dequeue();
+				while(storage.gears.Count>0){
 					CCFactoryGear gear = storage.gears[0];
 					storage.gears.RemoveAt(0);
 					gear.gameObject.hideFlags = HideFlags.None;
 					gear.gameObject.SetActive(true);
-					return gear;
-				}else{
+					if (gear.gameObject.transform.childCount != 0) {
+						CCDebug.Warning("CCFactory try to take a not empty gear: {0}-{1}.", gear.gameObject, gear.gameObject.transform.GetChild(0));
+						DestroyObject(gear.gameObject);
+					}else{
+						return gear;
+					}
+				}
+				//no gear caches
+				{
 					Type[] componentTypes = new Type[storage.componentTypeNames.Length];
 					for(int i=0; i<componentTypes.Length; i++){
 						componentTypes[i] = Type.GetType(storage.componentTypeNames[i]);
@@ -124,6 +139,12 @@ namespace BBGamelib{
 
 
 		public bool recycleGear(string category, CCFactoryGear gear, bool constraint=false){
+			if (gear.gameObject.transform.childCount != 0) {
+				CCDebug.Warning("CCFactory try to recyle a not empty gear: {0}-{1}.", gear.gameObject, gear.gameObject.transform.GetChild(0));
+				DestroyObject(gear.gameObject);
+			}
+
+
 			Storage storage = getStorage (category, true);
 			if (storage.componentTypeNames == null) {
 				string[] componentTypeNames = new string[gear.components.Length];
@@ -147,6 +168,7 @@ namespace BBGamelib{
 					}
 				}
 			}
+
 			gear.gameObject.layer = LayerMask.NameToLayer ("Default");
 			gear.gameObject.transform.SetParent(this.transform);
 			gear.gameObject.transform.localEulerAngles = Vector3.zero;
@@ -156,6 +178,11 @@ namespace BBGamelib{
 			gear.gameObject.hideFlags = HideFlags.HideInHierarchy;
 			gear.gameObject.SetActive(false);
 			storage.gears.Add(gear);
+
+			if (gear.gameObject.transform.parent == null) {
+				NSUtils.Assert(gear.gameObject.transform.parent != null, "Recyle# set parent fail!");
+			}
+
 			return true;
 		}
 		#endregion

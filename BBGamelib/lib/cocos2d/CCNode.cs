@@ -158,10 +158,8 @@ namespace BBGamelib{
 			// actions
 			stopAllActions ();
 			unscheduleAllSelectors ();
-			
-			// timers
-			if (_children != null) {
 
+			if (_children != null) {
 				var enumerator = _children.GetEnumerator();
 				while (enumerator.MoveNext()) {
 					CCNode child = enumerator.Current;
@@ -169,7 +167,7 @@ namespace BBGamelib{
 				}
 				_children.Clear ();
 			}
-			_parent = null;
+			this.parent = null;
 			recycleGear ();
 		}
 
@@ -538,7 +536,8 @@ namespace BBGamelib{
 					}
 					if (cleanup)
 						c.cleanup ();
-					c.parent = null;
+					else
+						c.parent = null;
 				}
 				_children.Clear ();
 			}
@@ -967,7 +966,7 @@ namespace BBGamelib{
 		 The matrix is in Pixels.
 		 @since v0.7.1
 		 */
-		public CGAffineTransform nodeToParentTransform()
+		public virtual CGAffineTransform nodeToParentTransform()
 		{
 			if ( _isTransformDirty ) {
 				

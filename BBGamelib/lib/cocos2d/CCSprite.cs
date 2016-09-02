@@ -164,7 +164,6 @@ namespace BBGamelib{
 
 		protected override void recycleGear ()
 		{
-			base.recycleGear ();
 			_content.renderer.sprite = null;
 			_content.renderer.color = Color.white;
 			_content.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
@@ -172,6 +171,7 @@ namespace BBGamelib{
 			_content.renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
 		
 			CCFactory.Instance.recycleGear (CCFactory.KEY_SPRITE, _content.gear);
+			base.recycleGear ();
 		}
 
 		public CCSpriteFrame displayedFrame{

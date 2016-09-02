@@ -130,6 +130,20 @@ namespace BBGamelib{
 				}
 			}
 		}
+
+		public void DL_CLEAR(){
+			_head = null;
+		}
+
+		public bool DL_CONTAINS(T t){
+			for (utNode<T> tmp = this.head; tmp != null; tmp = tmp.next) {
+				utNode<T> entry = tmp;
+				if (entry.obj.Equals(t)) {
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 }
 

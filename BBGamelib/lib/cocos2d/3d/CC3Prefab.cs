@@ -247,7 +247,6 @@ namespace BBGamelib{
 				renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
 			}
 
-			base.cleanup ();
 			if (_reused) {
 				CC3SpriteFactory.Instance.recyclePrefabObject (_path, _prefabObj);
 			} else {
@@ -257,6 +256,7 @@ namespace BBGamelib{
 					UnityEngine.Object.Destroy(_prefabObj);
 			}
 			_prefabObj = null;
+			base.cleanup ();
 		}
 		
 		

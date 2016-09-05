@@ -66,6 +66,7 @@ namespace BBGamelib.flash.imp{
 				view.scaleX = 1;
 				view.scaleY = 1;
 			}
+			view.visible = obj.isVisible;
 			view.zOrder = obj.depth;
 			if (obj.hasColorTransform) {
 				if (obj.colorTransform.add == new Color32 (0, 0, 0, 0)) {

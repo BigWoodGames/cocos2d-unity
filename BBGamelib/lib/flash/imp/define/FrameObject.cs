@@ -89,7 +89,7 @@ namespace BBGamelib.flash.imp{
 		public readonly bool hasCharacter;
 		public readonly int characterId;
 		public readonly int depth;
-		public readonly bool isHidden;
+		public readonly bool isVisible;
 		public readonly bool hasMatrix;
 		public readonly Vector2 position;
 		public readonly float rotation;
@@ -107,7 +107,7 @@ namespace BBGamelib.flash.imp{
 			hasMatrix = Utils.ReadByte (data, cursor) == 0 ? false : true;
 			hasCharacter = Utils.ReadByte (data, cursor) == 0 ? false : true;
 			hasColorTransform = Utils.ReadByte (data, cursor) == 0 ? false : true;
-			isHidden = Utils.ReadByte (data, cursor) == 0 ? false : true;
+			isVisible = Utils.ReadByte (data, cursor) == 1 ? true : false;
 			
 			depth = Utils.ReadInt32(data, cursor);
 			characterId = Utils.ReadInt32 (data, cursor);
@@ -138,7 +138,7 @@ namespace BBGamelib.flash.imp{
 								"hasCharacter=" + hasCharacter + ", "+
 								"name=" + instanceName + ", " + 
 								"depth=" + depth + ", " +
-								"isHidden=" + isHidden + ", " + 
+								"isVisible=" + isVisible + ", " + 
 								"hasMatrix=" + hasMatrix + ", ";
 			if (hasMatrix) {
 				s += 	"position=(" + position + ")," + 

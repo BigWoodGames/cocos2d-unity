@@ -8,9 +8,7 @@ namespace BBGamelib{
 		protected string _path;
 		protected Renderer[] _renderers;
 		protected ParticleSystem[] _particleSystems;
-		
-		protected bool _opacityModifyRGB;
-		protected Color _quadColor;
+
 		protected Color32[] _originalRendererColors;
 		protected Color32[] _originalParticleColors;
 		protected float[] _originalParticleTimes;
@@ -32,8 +30,6 @@ namespace BBGamelib{
 			_prefabObj.transform.localEulerAngles = Vector3.zero;
 			_prefabObj.transform.localScale = new Vector3 (1, 1, 1);
 
-			_opacityModifyRGB = true;
-			_quadColor = new Color32 (255, 255, 255, 255);
 			_isBoundsDirty = true;
 			_bounds = new Bounds (Vector3.zero, Vector3.zero);
 			_reused = true;
@@ -48,8 +44,6 @@ namespace BBGamelib{
 			_prefabObj.transform.localEulerAngles = Vector3.zero;
 			_prefabObj.transform.localScale = new Vector3 (1, 1, 1);
 
-			_opacityModifyRGB = true;
-			_quadColor = new Color32 (255, 255, 255, 255);
 			_isBoundsDirty = true;
 			_bounds = new Bounds (Vector3.zero, Vector3.zero);
 			_reused = true;
@@ -221,7 +215,10 @@ namespace BBGamelib{
 			if (_originalRendererColors != null) {
 				for (int i=renderers.Length-1; i>=0; i--) {
 					var renderer = renderers [i];
-					renderer.material.color = _originalRendererColors [i];
+					CCFactory.Instance.materialPropertyBlock.Clear();
+					CCFactory.Instance.materialPropertyBlock.SetColor("_Color", _originalRendererColors[i]);
+					CCFactory.Instance.materialPropertyBlock.SetColor("_AddedColor", new Color32(0, 0, 0, 0));
+					renderer.SetPropertyBlock(CCFactory.Instance.materialPropertyBlock);
 				}
 			}
 
@@ -265,39 +262,39 @@ namespace BBGamelib{
 		// ------------------------------------------------------------------------------
 		public void updateColor()
 		{
-			Color32 color4 = new Color32(_displayedColor.r, _displayedColor.g, _displayedColor.b, _displayedOpacity);
+			Color32 tint = _displayedColor.tint;
+			tint.a = _displayedOpacity.tint;
+			Color32 add = _displayedColor.add;
+			add.a = _displayedOpacity.add;
 			
-			// special opacity for premultiplied textures
-			if ( _opacityModifyRGB ) {
-				color4.r = (byte)(color4.r * _displayedOpacity/255.0f);
-				color4.g = (byte)(color4.g * _displayedOpacity/255.0f);
-				color4.b = (byte)(color4.b * _displayedOpacity/255.0f);
-			}
-			_quadColor = color4;
+	
 			Renderer[] renderers = this.renderers;
-			if(_originalRendererColors == null){
-				_originalRendererColors = new Color32[_renderers.Length];
-				for(int i=_originalRendererColors.Length-1; i>=0;i--){
-					if(_renderers[i].material.HasProperty("_Color"))
-						_originalRendererColors[i] = _renderers[i].material.color;
-				}
-			}
-			for (int i=renderers.Length-1; i>=0; i--) {
-				var renderer = renderers [i];
-				if(renderer.material.HasProperty("_Color")){
-					renderer.material.color = _quadColor;
-				}
-			}
-			if (this.particleSystems != null && this.particleSystems.Length > 0) {
-				if (_originalParticleColors == null) {
-					_originalParticleColors = new Color32[_particleSystems.Length];
-					for (int i=_originalParticleColors.Length-1; i>=0; i--) {
-						_originalParticleColors [i] = _particleSystems [i].startColor;
+			if (renderers != null) {
+				if (_originalRendererColors == null) {
+					_originalRendererColors = new Color32[_renderers.Length];
+					for (int i=_originalRendererColors.Length-1; i>=0; i--) {
+						Renderer renderer = renderers [i];
+						Material m = renderer.sharedMaterial;
+						if (m!=null && m.HasProperty ("_Color"))
+							_originalRendererColors [i] = m.color;
 					}
 				}
-				for (int i=_particleSystems.Length-1; i>=0; i--) {
-					var particleSystem = _particleSystems [i];
-					particleSystem.startColor = _originalParticleColors [i] * _quadColor;
+				for (int i=renderers.Length-1; i>=0; i--) {
+					var renderer = renderers [i];
+					ccUtils.SetRenderColor (renderer, tint, add);
+				}
+				if (this.particleSystems != null && this.particleSystems.Length > 0) {
+					if (_originalParticleColors == null) {
+						_originalParticleColors = new Color32[_particleSystems.Length];
+						for (int i=_originalParticleColors.Length-1; i>=0; i--) {
+							_originalParticleColors [i] = _particleSystems [i].startColor;
+						}
+					}
+					Color tintColor = tint;
+					for (int i=_particleSystems.Length-1; i>=0; i--) {
+						var particleSystem = _particleSystems [i];
+						particleSystem.startColor = _originalParticleColors [i] * tintColor;
+					}
 				}
 			}
 		}
@@ -309,7 +306,7 @@ namespace BBGamelib{
 			}
 		}
 		
-		public override void updateDisplayedColor (Color32 parentColor)
+		public override void updateDisplayedColor (ColorTransform parentColor)
 		{
 			base.updateDisplayedColor (parentColor);
 			updateColor ();
@@ -321,17 +318,8 @@ namespace BBGamelib{
 				updateColor();
 			}
 		}
-		public override bool opacityModifyRGB{
-			get{return _opacityModifyRGB;}
-			set{
-				if( _opacityModifyRGB != value ) {
-					_opacityModifyRGB = value;
-					updateColor();
-				}
-			}
-		}
 		
-		public override void updateDisplayedOpacity (byte parentOpacity)
+		public override void updateDisplayedOpacity (OpacityTransform parentOpacity)
 		{
 			base.updateDisplayedOpacity (parentOpacity);
 			updateColor ();

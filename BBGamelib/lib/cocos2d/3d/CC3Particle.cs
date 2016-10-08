@@ -83,6 +83,12 @@ namespace BBGamelib{
 			}
 		}
 
+		public void stop(){
+			for (int i=0; i<_controllers.Length; i++) {
+				_controllers[i].stop();
+			}
+		}
+
 		void onControllerCallback(CC3ParticleController ctr){
 			bool hasRunning = false;
 			for (int i=0; i<_controllers.Length; i++) {

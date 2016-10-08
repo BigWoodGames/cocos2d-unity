@@ -60,11 +60,7 @@ namespace BBGamelib{
 		Color32   _textFillColor;
 
 		CCLabelContent 		_content;
-		
-		// vertex coords, texture coords and color info
-		//		ccV3F_C4B_T2F_Quad _quad;
-		Color _quadColor;
-		
+
 		// opacity and RGB protocol
 		bool		_opacityModifyRGB;
 		
@@ -106,7 +102,6 @@ namespace BBGamelib{
 			_opacityModifyRGB = true;
 			_flipY = _flipX = false;
 			_anchorPoint =  new Vector2(0.5f, 0.5f);
-			_quadColor = new Color32 (255, 255, 255, 255);
 
 			_hAlignment = CCTextAlignment.Center;
 			_vAlignment = CCVerticalTextAlignment.Center;
@@ -407,16 +402,13 @@ namespace BBGamelib{
 		#region CCLabelTTF - RGBA protocol
 		public void updateColor()
 		{
-			Color32 color4 = new Color32(_displayedColor.r, _displayedColor.g, _displayedColor.b, _displayedOpacity);
-			
 			// special opacity for premultiplied textures
-			if ( _opacityModifyRGB ) {
-				color4.r = (byte)(color4.r * _displayedOpacity/255.0f);
-				color4.g = (byte)(color4.g * _displayedOpacity/255.0f);
-				color4.b = (byte)(color4.b * _displayedOpacity/255.0f);
-			}
-			_quadColor = color4;
-			_content.mesh.color = _quadColor;
+			Color32 tint = _displayedColor.tint;
+			tint.a = _displayedOpacity.tint;
+			Color32 add = _displayedColor.add;
+			add.a = _displayedOpacity.add;
+			
+			ccUtils.SetRenderColor (_content.renderer, tint, add);
 		}
 		
 		public override Color32 color {
@@ -426,7 +418,7 @@ namespace BBGamelib{
 			}
 		}
 		
-		public override void updateDisplayedColor (Color32 parentColor)
+		public override void updateDisplayedColor (ColorTransform parentColor)
 		{
 			base.updateDisplayedColor (parentColor);
 			updateColor ();
@@ -448,7 +440,7 @@ namespace BBGamelib{
 			}
 		}
 		
-		public override void updateDisplayedOpacity (byte parentOpacity)
+		public override void updateDisplayedOpacity (OpacityTransform parentOpacity)
 		{
 			base.updateDisplayedOpacity (parentOpacity);
 			updateColor ();

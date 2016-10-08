@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using System;
 
 namespace BBGamelib.flash.imp{
-	public class Graphic : DisplayObjectImp
+	public class Graphic : Display
 	{
-		DefineGraphic _define;
+		
+		// ------------------------------------------------------------------------------
+		//  ctor
+		// ------------------------------------------------------------------------------
+		TagDefineGraphic _define;
 		CCSprite _view;
-    
-        public Graphic(DefineGraphic define){
+		public Graphic(TagDefineGraphic define){
 			_define = define;
 			if(_define.className != null)
 				_view = new CCSprite(string.Format("{0}_{1}.png", define.flash.prefix, _define.className));
@@ -20,33 +23,26 @@ namespace BBGamelib.flash.imp{
 			_view.anchorPoint = _define.anchorPoint;
 			_view.gameObject.name = define.characterId.ToString();
 			_view.opacityModifyRGB = false;
+			addChild (_view);
         }
         
-
-		#region implements DisplayObject
-		public override int characterId{ get{return _define.characterId;}}
-		public override CCNodeRGBA view{get{return _view;}}
-		public override Rect bounds{ get{
-				Rect rect = view.boundingBox;
-				rect.position = -_view.anchorPointInPixels;
-				return rect;
-			}
-		}
-		public override string className{ get{return _define.className;}}
-		public override float fps {
+		// ------------------------------------------------------------------------------
+		//  implements
+		// ------------------------------------------------------------------------------
+		public override TagDefineDisplay define {
 			get {
-				return _define.flash.frameRate;
-			}
-			set{
-				CCDebug.Warning("BBGamelib:flash: Do nothing to setting a graphic's fps.");
+				return _define;
 			}
 		}
-		public override kTweenMode tweenMode{ get{return kTweenMode.SkipFrames;} 
-			set{
-				CCDebug.Warning("BBGamelib:flash: Do nothing to setting a graphic's tweenMode.");
-			}
+
+		public override Rect getBounds(){
+			Rect rect = _view.boundingBox;
+			rect.position = -_view.anchorPointInPixels;
+			return rect;
 		}
-		#endregion
+
+
+
 	}
 }
 

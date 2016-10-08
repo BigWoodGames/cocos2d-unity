@@ -9,29 +9,6 @@ namespace BBGamelib.flash.imp{
 		public int index=0;
 	}
 
-	public struct ColorTransform {
-		public Color multiply;
-//		public Color add;
-
-		public ColorTransform(Color aMultiply, Color aAdd){
-			multiply = aMultiply;
-//			add = aAdd;
-		}
-
-		public Color add{
-			set{
-			}
-			get{
-				return new Color(0, 0, 0, 0);			
-			}
-		}
-
-		public override string ToString ()
-		{
-			return string.Format ("<{0} = {1} | Mutilply={2}>", this.GetType().Name, this.GetHashCode(), multiply);
-		}
-	}
-
 	public class Utils
 	{
 		public static byte ReadByte(byte[] data, Cursor cursor)
@@ -118,19 +95,17 @@ namespace BBGamelib.flash.imp{
 		}
 		
 		public static ColorTransform ReadColorTransform(byte[] data, Cursor cursor){
-			ColorTransform ctr = new ColorTransform();
-			ctr.add = new Color (0, 0, 0 ,0);
-			ctr.multiply = new Color32 (0, 0, 0, 0);
+			ColorTransform ctr = ColorTransform.Default;
 			int mtype = Utils.ReadInt32(data, cursor);
 			if (mtype==1) {
-				ctr.multiply = new Color(1, 1, 1, 1);
+				ctr.tint = new Color(1, 1, 1, 1);
 			}else if (mtype==2){
 				Color color = new Color();
 				color.r = Utils.ReadFloat(data, cursor);
 				color.g = Utils.ReadFloat(data, cursor);
 				color.b = Utils.ReadFloat(data, cursor);
 				color.a = Utils.ReadFloat(data, cursor);
-				ctr.multiply = color;
+				ctr.tint = color;
 			}
 			int atype = Utils.ReadInt32(data, cursor);
 			if (atype==1) {

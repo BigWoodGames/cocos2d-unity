@@ -155,5 +155,20 @@ namespace BBGamelib{
 			
 			GUI.Box( position, GUIContent.none, _staticRectStyle );
 		}
+
+		public static void SetRenderColor(Renderer renderer, Color tint, Color add){
+			Material m = renderer.sharedMaterial;
+			if (m != null) {
+				MaterialPropertyBlock block = CCFactory.Instance.materialPropertyBlock;
+				renderer.GetPropertyBlock (block);
+				if (m.HasProperty ("_Color")) {
+					block.SetColor ("_Color", tint);
+				}
+				if (m.HasProperty ("_AddedColor")) {
+					block.SetColor ("_AddedColor", add);
+				}
+				renderer.SetPropertyBlock (block);
+			}
+		}
 	}
 }

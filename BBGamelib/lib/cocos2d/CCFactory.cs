@@ -17,20 +17,21 @@ namespace BBGamelib{
 	[AddComponentMenu("")]
 	public class CCFactory : MonoBehaviour
 	{
-		#region default categories
+		// ------------------------------------------------------------------------------
+		//  macros
+		// ------------------------------------------------------------------------------
 		public const string KEY_NODE = "CCFactory.NODE";
 		public const string KEY_SPRITE = "CCFactory.SPRITE";
 		public const string KEY_SPRITE_BOXCOLLIDER2D = "CCFactory.SPRITE_BOXCOLLIDER2D";
 		public const string KEY_SPRITE_CIRCLECOLLIDER2D = "CCFactory.SPRITE_CIRCLECOLLIDER2D";
 		public const string KEY_LABEL = "CCFactory.LABEL";
-		#endregion
-
 		public const string LAYER_DEFAULT = "Default";
-
-		#region singleton
+		
+		// ------------------------------------------------------------------------------
+		//  singleton
+		// ------------------------------------------------------------------------------
 		[SerializeField] [HideInInspector]private bool firstPassFlag=true;
 		static CCFactory _Instance=null;
-		//---------singleton------
 		public static CCFactory Instance{
 			get{
 				return _Instance;
@@ -38,6 +39,7 @@ namespace BBGamelib{
 		}
 		public virtual void Awake() {
 			if (Application.isPlaying) {
+				_materialPropertyBlock=new MaterialPropertyBlock();
 				if (_Instance != null && _Instance != this) {
 					Destroy (this.gameObject);
 					return;
@@ -51,9 +53,10 @@ namespace BBGamelib{
 				firstPassFlag = false;
 			}
 		}
-		#endregion
 		
-		#region properties
+		// ------------------------------------------------------------------------------
+		//  properties
+		// ------------------------------------------------------------------------------
 		[Serializable]
 		public class Storage{
 			[SerializeField] public string category;
@@ -72,15 +75,26 @@ namespace BBGamelib{
 		 	gear.gameObject.SetActive (false); 
 		 */
 		public DictionaryOfStringAndStorage storages{ get { return _storages; } }
-		#endregion
-
 		
-		#region public method
+		// shared proerties block of material
+		MaterialPropertyBlock _materialPropertyBlock;
+		public MaterialPropertyBlock materialPropertyBlock{ get { return _materialPropertyBlock; } }
+
+		// ------------------------------------------------------------------------------
+		//  public edit method
+		// ------------------------------------------------------------------------------
 		public void generateNodeGearsInEditMode(int num){
 			generateGearsInEditMode (KEY_NODE, null, num);
 		}
 		public void generateSpriteGearsInEditMode(int num){
 			generateGearsInEditMode (KEY_SPRITE, new Type[1]{typeof(SpriteRenderer)}, num);
+
+			Material sptMat = Resources.Load<Material> ("BBGamelib/CCSprite");
+			Storage sptStorage = getStorage (KEY_SPRITE, false);
+			foreach (var gear in sptStorage.gears) {
+				SpriteRenderer render = gear.components[0] as SpriteRenderer;
+				render.material = sptMat;
+			}
 		}
 		public void generateLabelGearsInEditMode(int num){
 			generateGearsInEditMode (KEY_LABEL, new Type[2]{typeof(MeshRenderer), typeof(TextMesh)}, num);
@@ -107,6 +121,10 @@ namespace BBGamelib{
 				storage.gears.Add(gear);
 			}
 		}
+		
+		// ------------------------------------------------------------------------------
+		//  public runtime metod
+		// ------------------------------------------------------------------------------
 		public CCFactoryGear takeGear(string category){
 			Storage storage = getStorage (category, false);
 			if (storage!=null) {
@@ -142,6 +160,7 @@ namespace BBGamelib{
 			if (gear.gameObject.transform.childCount != 0) {
 				CCDebug.Warning("CCFactory try to recyle a not empty gear: {0}-{1}.", gear.gameObject, gear.gameObject.transform.GetChild(0));
 				DestroyObject(gear.gameObject);
+				return false;
 			}
 
 
@@ -185,9 +204,10 @@ namespace BBGamelib{
 
 			return true;
 		}
-		#endregion
-
-		#region inner method
+		
+		// ------------------------------------------------------------------------------
+		//  private
+		// ------------------------------------------------------------------------------
 		CCFactoryGear buildGear(Type[] componentTypes){
 			CCFactoryGear gear = new CCFactoryGear();
 			
@@ -216,7 +236,6 @@ namespace BBGamelib{
 			}
 			return storage;
 		}
-		#endregion
 	}
 }
 

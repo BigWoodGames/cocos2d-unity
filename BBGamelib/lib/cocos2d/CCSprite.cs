@@ -15,54 +15,14 @@ namespace BBGamelib{
 			gear = CCFactory.Instance.takeGear (CCFactory.KEY_SPRITE);
 			gear.gameObject.name = "content";
 			gear.gameObject.transform.localPosition = Vector3.zero;
-//			gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			this.renderer.color = Color.white;
 			this.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
 		}
 	}
 	public class CCSprite : CCNodeRGBA, CCSpriteProtocol
 	{
-		
-		//
-		// Data used when the sprite is rendered using a CCSpriteBatchNode
-		//
-//		CCTextureAtlas			*_textureAtlas;			// Sprite Sheet texture atlas (weak reference)
-//		NSUInteger				_atlasIndex;			// Absolute (real) Index on the batch node
-//		CCSpriteBatchNode		*_batchNode;			// Used batch node (weak reference)
-		CGAffineTransform		_transformToBatch;		//
-//		bool					_dirty;					// Sprite needs to be updated
-//		bool					_recursiveDirty;		// Subchildren needs to be updated
-//		bool					_hasChildren;			// optimization to check if it contain children
-		bool					_shouldBeHidden;		// should not be drawn because one of the ancestors is not visible
-		
-		//
-		// Data used when the sprite is self-rendered
-		//
-//		ccBlendFunc				_blendFunc;				// Needed for the texture protocol
-//		Texture2D				_texture;				// Texture used to render the sprite
 		CCSpriteFrame			_spriteFrame;
 		CCSpriteContent 		_content;
-
-		//
-		// Shared data
-		//
-		
-		// sprite rectangle
-//		Rect	_rect;
-		
-		// texture
-//		bool	_rectRotated;
-		
-		// Offset Position (used by Zwoptex)
-//		Vector2	_offsetPosition;
-//		Vector2 _unflippedOffsetPositionFromCenter;
-		
-		// vertex coords, texture coords and color info
-//		ccV3F_C4B_T2F_Quad _quad;
-		Color _quadColor;
-		
-		// opacity and RGB protocol
-		bool		_opacityModifyRGB;
 		
 		// image is flipped
 		bool	_flipX;
@@ -79,11 +39,8 @@ namespace BBGamelib{
 		{
 			base.initWithGear (gear);
 			_gear.gameObject.name = "Sprite";
-			_gear.gameObject.transform.localPosition = Vector3.zero;
-//			_gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			_content = new CCSpriteContent ();
 			_content.gameObject.transform.parent = gameObject.transform;
-//			_content.renderer.sortingOrder = 1;
 		}
 		
 		//sprite with file
@@ -103,49 +60,10 @@ namespace BBGamelib{
 		public CCSprite(CCSpriteFrame frame){
 			initWithSpriteFrame (frame);
 		}
-		public void initWithSpriteFrame(CCSpriteFrame spriteFrame){
-
-			// shader program
-//			self.shaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_PositionTextureColor];
-			
-//			_dirty = _recursiveDirty = false;
-			
-			_opacityModifyRGB = true;
-			
-//			_blendFunc.src = CC_BLEND_SRC;
-//			_blendFunc.dst = CC_BLEND_DST;
-			
+		public void initWithSpriteFrame(CCSpriteFrame spriteFrame){	
 			_flipY = _flipX = false;
-			
-			// default transform anchor: center
 			_anchorPoint =  new Vector2(0.5f, 0.5f);
-			
-			// zwoptex default values
-//			_offsetPosition = CGPointZero;
-			
-//			_hasChildren = false;
-//			_batchNode = null;
-			
-			// clean the Quad
-//			bzero(&_quad, sizeof(_quad));
-			
-			// Atlas: Color
-//			ccColor4B tmpColor = {255,255,255,255};
-//			_quad.bl.colors = tmpColor;
-//			_quad.br.colors = tmpColor;
-//			_quad.tl.colors = tmpColor;
-//			_quad.tr.colors = tmpColor;
-			_quadColor = new Color32 (255, 255, 255, 255);
-
-
 			this.displayedFrame = spriteFrame;
-//			[self setTexture:texture];
-//			[self setTextureRect:rect rotated:rotated untrimmedSize:rect.size];
-			
-			
-			// by default use "Self Render".
-			// if the sprite is added to a batchnode, then it will automatically switch to "batchnode Render"
-//			[self setBatchNode:nil];
 		}
 
 		public override string ToString ()
@@ -164,9 +82,9 @@ namespace BBGamelib{
 
 		protected override void recycleGear ()
 		{
-			_content.renderer.sprite = null;
-			_content.renderer.color = Color.white;
-			_content.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
+			CCFactory.Instance.materialPropertyBlock.Clear ();
+			_content.renderer.SetPropertyBlock (CCFactory.Instance.materialPropertyBlock);
+
 			//reset default layer
 			_content.renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
 		
@@ -179,8 +97,6 @@ namespace BBGamelib{
 			set{ 
 				_spriteFrame = value;
 				_content.renderer.sprite = value.sprite;
-//				Vector2 sizeInUnits = value.bounds.size;
-//				Vector2 sizeInPixels = ccUtils.UnitsToPixels(sizeInUnits);
 				this.contentSize = value.originalSize;
 				_isContentDirty = true;
 			}
@@ -194,7 +110,6 @@ namespace BBGamelib{
 				Vector2 contentPosition = _contentSize / 2 + _spriteFrame.offset;
 				contentPosition -= _anchorPointInPixels;
 				Vector2 pInUIUnits = ccUtils.PixelsToUnits (contentPosition);
-//				_content.transform.localPosition = new Vector3(pInUIUnits.x, pInUIUnits.y, _content.transform.localPosition.z);
 				Vector3 pos = _content.transform.localPosition;
 				pos.x = pInUIUnits.x;
 				pos.y = pInUIUnits.y;
@@ -239,8 +154,6 @@ namespace BBGamelib{
 
 			//CCNode already sets _isReorderChildDirty so this needs to be after batchNode check
 			base.addChild (child, z, tag);
-			
-//			_hasChildren = true;
 		}
 
 		public override void reorderChild (CCNode child, int z)
@@ -256,16 +169,6 @@ namespace BBGamelib{
 		#endregion
 
 		#region CCSprite - property overloads
-//		public virtual void setDirtyRecursively(bool b)
-//		{
-//			_dirty = _recursiveDirty = b;
-//			// recursively set dirty
-//			if( _hasChildren ) {
-//				foreach(CCSprite child in _children)
-//					child.setDirtyRecursively(true);
-//			}
-//		}
-
 		public virtual bool flipX{
 			get{return _flipX;}
 			set{
@@ -297,16 +200,12 @@ namespace BBGamelib{
 		#region CCSprite - RGBA protocol
 		public void updateColor()
 		{
-			Color32 color4 = new Color32(_displayedColor.r, _displayedColor.g, _displayedColor.b, _displayedOpacity);
+			Color32 tint = _displayedColor.tint;
+			tint.a = _displayedOpacity.tint;
+			Color32 add = _displayedColor.add;
+			add.a = _displayedOpacity.add;
 
-			// special opacity for premultiplied textures
-			if ( _opacityModifyRGB ) {
-				color4.r = (byte)(color4.r * _displayedOpacity/255.0f);
-				color4.g = (byte)(color4.g * _displayedOpacity/255.0f);
-				color4.b = (byte)(color4.b * _displayedOpacity/255.0f);
-			}
-			_quadColor = color4;
-			_content.renderer.color = _quadColor;
+			ccUtils.SetRenderColor (_content.renderer, tint, add);
 		}
 
 		public override Color32 color {
@@ -316,7 +215,7 @@ namespace BBGamelib{
 			}
 		}
 
-		public override void updateDisplayedColor (Color32 parentColor)
+		public override void updateDisplayedColor (ColorTransform parentColor)
 		{
 			base.updateDisplayedColor (parentColor);
 			updateColor ();
@@ -328,17 +227,8 @@ namespace BBGamelib{
 				updateColor();
 			}
 		}
-		public override bool opacityModifyRGB{
-			get{return _opacityModifyRGB;}
-			set{
-				if( _opacityModifyRGB != value ) {
-					_opacityModifyRGB = value;
-					updateColor();
-				}
-			}
-		}
 
-		public override void updateDisplayedOpacity (byte parentOpacity)
+		public override void updateDisplayedOpacity (OpacityTransform parentOpacity)
 		{
 			base.updateDisplayedOpacity (parentOpacity);
 			updateColor ();

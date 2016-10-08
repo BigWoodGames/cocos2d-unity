@@ -4,31 +4,58 @@ using System.Collections;
 namespace BBGamelib
 {
 	#region mark - CCRGBAProtocol
+	public struct ColorTransform{
+		public static ColorTransform Default = new ColorTransform(Color.white, new Color32(0, 0, 0, 0));
+		public Color32 tint;
+		public Color32 add;
+		public ColorTransform(Color32 tint, Color32 add){
+			this.tint = tint;
+			this.add = add;
+		}
+	}
+	public struct OpacityTransform{
+		public static OpacityTransform Default = new OpacityTransform(255, 0);
+		public byte tint;
+		public byte add;
+		public OpacityTransform(byte tint, byte add){
+			this.tint = tint;
+			this.add = add;
+		}
+	}
+
 	public interface CCRGBAProtocol{
 		/** sets and returns the color (tint)*/
 		Color32 color{ get; set;}
+
+		/** sets and returns the color (tint)*/
+		ColorTransform colorTransform{ get; set;}
 		
 		/** returns the displayed color */
-		Color32 displayedColor{ get;}
+		ColorTransform displayedColor{ get;}
 
 		/** whether or not color should be propagated to its children */
 		bool cascadeColorEnabled{ get; set;}
 		
 		/** recursive method that updates display color */
-		void updateDisplayedColor(Color32 color);
+		void updateDisplayedColor(ColorTransform color);
 		
 		/** sets and returns the opacity.
 		 @warning If the the texture has premultiplied alpha then, the R, G and B channels will be modified.
 		 Values goes from 0 to 255, where 255 means fully opaque.
 		 */
 		byte opacity{ get; set;}
+
+		/** sets and returns the color (tint)*/
+		OpacityTransform opacityTransform{ get; set;}
+
 		/** returns the displayed opacity */
-		byte displayedOpacity{ get;}
+		OpacityTransform displayedOpacity{ get;}
+
 		/** whether or not opacity should be propagated to its children */
 		bool cascadeOpacityEnabled{get;set;}
 		
 		/** recursive method that updates the displayed opacity */
-		void updateDisplayedOpacity(byte opacity);
+		void updateDisplayedOpacity(OpacityTransform opacity);
 
 		/** sets the premultipliedAlphaOpacity property.
 		 If set to NO then opacity will be applied as: glColor(R,G,B,opacity);

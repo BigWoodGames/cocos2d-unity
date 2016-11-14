@@ -119,7 +119,11 @@ namespace BBGamelib{
 			gotoAndStop(frame);
 		}
 
-		public void play(BBFlashMovieCallback callback = null){
+		public void play(){
+			gotoAndPlay (0, this.totalFrames - 1, null);
+		}
+
+		public void play(BBFlashMovieCallback callback){
 			gotoAndPlay (0, this.totalFrames - 1, callback);
 		}
 

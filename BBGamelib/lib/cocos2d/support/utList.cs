@@ -55,8 +55,9 @@ namespace BBGamelib{
 			NSUtils.Assert((del).prev != null, "utList#DL_DELETE: del.prev should not be null.");                                                                 
 			if ((del).prev == (del)) {                                                                  
 				(_head)=null;                                                                             
-			} else if ((del)==(_head)) {                                                                  
-				(del).next.prev = (del).prev;                                                         
+			} else if ((del)==(_head)) {         
+				if(del.next != null)
+					(del).next.prev = (del).prev;                                                         
 				(_head) = (del).next;                                                                    
 			} else {                                                                                     
 				(del).prev.next = (del).next;                                                         

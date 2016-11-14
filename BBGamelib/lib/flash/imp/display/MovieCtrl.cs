@@ -98,6 +98,7 @@ namespace BBGamelib.flash.imp
 			//Make sure endFrame not equals to startFrame when init
 			if (_endFrame > _startFrame) {
 				int toFrame = _startFrame + Mathf.FloorToInt (_elapsed * _fps);
+				bool isEnd = toFrame >= _endFrame;
 				if(toFrame > _endFrame){
 					_elapsed -= Mathf.Abs(_endFrame - _startFrame + 1)/_fps;
 					toFrame = _startFrame + Mathf.FloorToInt (_elapsed * _fps);
@@ -105,6 +106,10 @@ namespace BBGamelib.flash.imp
 				toFrame = Mathf.Min (toFrame, _endFrame);
 				
 				int nextFrame = _movie.curFrame + 1;
+				if(nextFrame > _endFrame){
+					nextFrame = _startFrame;
+				}
+
 				if(toFrame > nextFrame){
 					for (int i=nextFrame; i < toFrame; i++) {
 						if(_movie.tweenMode == kTweenMode.SkipFrames || (_movie.tweenMode==kTweenMode.SkipNoLabelFrames && _movie.movieDefine.frames[i]==null))
@@ -115,21 +120,23 @@ namespace BBGamelib.flash.imp
 				}
 				if(toFrame != _movie.curFrame){
 					_movie.gotoFrame(toFrame);
-					if (_movie.curFrame == _endFrame) {
-						if(!_loop)
-							stop ();
-						if(_callback != null)
-							_callback(_movie);
+					if (isEnd) {
+						onEnd();
 					}
 				}
 			} else {
 				int toFrame = _startFrame + Mathf.FloorToInt (_elapsed * _fps);
-				if(toFrame < _endFrame){
+				bool isEnd = toFrame >= _endFrame;
+				if(toFrame < _startFrame){
 					_elapsed -= Mathf.Abs(_endFrame - _startFrame + 1)/_fps;
 					toFrame = _startFrame + Mathf.FloorToInt (_elapsed * _fps);
 				}
 				toFrame = Mathf.Max (toFrame, _endFrame);
 				int nextFrame = _movie.curFrame - 1;
+				if(nextFrame < _startFrame){
+					nextFrame = _endFrame;
+				}
+
 				if(toFrame < nextFrame){
 					for (int i=nextFrame; i > toFrame; i--) {
 						if(_movie.tweenMode == kTweenMode.SkipFrames || (_movie.tweenMode==kTweenMode.SkipNoLabelFrames && _movie.movieDefine.frames[i]==null))
@@ -140,14 +147,22 @@ namespace BBGamelib.flash.imp
 				}
 				if(toFrame != _movie.curFrame){
 					_movie.gotoFrame(toFrame);
-					if (_movie.curFrame == _endFrame) {
-						if(!_loop)
-							stop ();
-						if(_callback != null)
-							_callback(_movie);
+					if (isEnd) {
+						onEnd();
 					}
 				}
 			}
+		}
+		
+		void resetMovie(){
+			
+		}
+
+		void onEnd(){
+			if(!_loop)
+				stop ();
+			if(_callback != null)
+				_callback(_movie);
 		}
 	}
 }

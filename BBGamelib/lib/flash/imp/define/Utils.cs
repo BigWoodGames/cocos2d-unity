@@ -95,28 +95,32 @@ namespace BBGamelib.flash.imp{
 		}
 		
 		public static ColorTransform ReadColorTransform(byte[] data, Cursor cursor){
-			ColorTransform ctr = ColorTransform.Default;
+			ColorTransform ctr = new ColorTransform ();
 			int mtype = Utils.ReadInt32(data, cursor);
-			if (mtype==1) {
-				ctr.tint = new Color(1, 1, 1, 1);
-			}else if (mtype==2){
-				Color color = new Color();
-				color.r = Utils.ReadFloat(data, cursor);
-				color.g = Utils.ReadFloat(data, cursor);
-				color.b = Utils.ReadFloat(data, cursor);
-				color.a = Utils.ReadFloat(data, cursor);
+			if (mtype == 1) {
+				ctr.tint = new Color (1, 1, 1, 1);
+			} else if (mtype == 2) {
+				Color color = new Color ();
+				color.r = Utils.ReadFloat (data, cursor);
+				color.g = Utils.ReadFloat (data, cursor);
+				color.b = Utils.ReadFloat (data, cursor);
+				color.a = Utils.ReadFloat (data, cursor);
 				ctr.tint = color;
+			} else {
+				ctr.tint = new Color(0, 0, 0, 0);
 			}
 			int atype = Utils.ReadInt32(data, cursor);
-			if (atype==1) {
-				ctr.add = new Color(255, 255, 255, 255);
-			}else if (atype==2){
-				Color32 color = new Color();
-				color.r = Utils.ReadByte(data, cursor);
-				color.g = Utils.ReadByte(data, cursor);
-				color.b = Utils.ReadByte(data, cursor);
-				color.a = Utils.ReadByte(data, cursor);
+			if (atype == 1) {
+				ctr.add = new Color (255, 255, 255, 255);
+			} else if (atype == 2) {
+				Color32 color = new Color ();
+				color.r = Utils.ReadByte (data, cursor);
+				color.g = Utils.ReadByte (data, cursor);
+				color.b = Utils.ReadByte (data, cursor);
+				color.a = Utils.ReadByte (data, cursor);
 				ctr.add = color;
+			} else {
+				ctr.add = new Color(0, 0, 0, 0);
 			}
 			return ctr;
 		}

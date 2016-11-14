@@ -56,10 +56,10 @@ namespace BBGamelib.flash.imp
 			if(hasVisible)
 				visible = Utils.ReadByte (data, cursor) != 0;
 
-			if(hasColorTransform)
-				colorTransform = Utils.ReadColorTransform(data, cursor);
+			if (hasColorTransform)
+				colorTransform = Utils.ReadColorTransform (data, cursor);
 			else
-				colorTransform = new ColorTransform(Color.white, Color.black);
+				colorTransform = ColorTransform.Default;
 
 			if(hasName)
 				instanceName = Utils.ReadString(data, cursor);
@@ -88,33 +88,16 @@ namespace BBGamelib.flash.imp
 						}
 					}
 				}
+
+				if(frame.frameIndex == movie.movieCtrl.startFrame){
+					fixFrame(movie, frame, frameObj);
+				}
 				
 				NSUtils.Assert (display != null, "Movie#applyTagPlaceObject try to reference a null display!");
 			}else if (display == null) {
 				TagDefine newCharacterDefine = flash.getDefine (frameObj.characterId);
 				if (newCharacterDefine is TagDefineDisplay) {
-					int lastKeyFrameIndex = -1;
-					for(int i=frame.frameIndex; i>=0; i--){
-						Frame preFrame = movie.movieDefine.frames[i];
-						for(int j=0; j<preFrame.objs.Length; j++){
-							FrameObject preFrameObj = preFrame.objs[j];
-							if(preFrameObj.isKeyFrame && preFrameObj.placedAtIndex == frameObj.placedAtIndex){
-								lastKeyFrameIndex = i;
-								break;
-							}
-						}
-						if(lastKeyFrameIndex>=0)
-							break;
-					}
-					for(int i=lastKeyFrameIndex; i<frame.frameIndex; i++){
-						Frame preFrame = movie.movieDefine.frames[i];
-						for(int j=0; j<preFrame.objs.Length; j++){
-							FrameObject preFrameObj = preFrame.objs[j];
-							if(preFrameObj.placedAtIndex == frameObj.placedAtIndex){
-								movie.applyFrameObj(preFrame, preFrameObj);
-							}
-						}
-					}
+					fixFrame(movie, frame, frameObj);
 				}
 				display = movie.depthDisplays [depth-1];
 				
@@ -128,16 +111,56 @@ namespace BBGamelib.flash.imp
 					display.rotation = rotation;
 					display.scaleX = scaleX/preScale;
 					display.scaleY = scaleY/preScale;
+				}else if(frame.frameIndex == 0){
+					float preScale = display.define.preScale;
+					display.position = Vector2.zero;
+					display.rotation = 0;
+					display.scaleX = preScale;
+					display.scaleY = preScale;
 				}
+
 				if(hasVisible)
 					display.visible = visible;
+				else if(frame.frameIndex == 0){
+					display.visible = true;
+				}
+
 				display.zOrder = depth;
 				
 				if (hasColorTransform) {
 					display.colorTransform = colorTransform;
 					display.opacityTransform = new OpacityTransform(colorTransform.tint.a, colorTransform.add.a);
 				} 
+				else if(frame.frameIndex == 0){
+					display.colorTransform = ColorTransform.Default;
+					display.opacityTransform = new OpacityTransform(display.colorTransform.tint.a, display.colorTransform.add.a);
+				}
 				display.instanceName = instanceName;
+			}
+		}
+
+		void fixFrame(Movie movie, Frame frame, FrameObject frameObj){
+			int lastKeyFrameIndex = -1;
+			for(int i=frame.frameIndex; i>=0; i--){
+				Frame preFrame = movie.movieDefine.frames[i];
+				for(int j=0; j<preFrame.objs.Length; j++){
+					FrameObject preFrameObj = preFrame.objs[j];
+					if(preFrameObj.isKeyFrame && preFrameObj.placedAtIndex == frameObj.placedAtIndex){
+						lastKeyFrameIndex = i;
+						break;
+					}
+				}
+				if(lastKeyFrameIndex>=0)
+					break;
+			}
+			for(int i=lastKeyFrameIndex; i<frame.frameIndex; i++){
+				Frame preFrame = movie.movieDefine.frames[i];
+				for(int j=0; j<preFrame.objs.Length; j++){
+					FrameObject preFrameObj = preFrame.objs[j];
+					if(preFrameObj.placedAtIndex == frameObj.placedAtIndex){
+						movie.applyFrameObj(preFrame, preFrameObj);
+					}
+				}
 			}
 		}
 	}

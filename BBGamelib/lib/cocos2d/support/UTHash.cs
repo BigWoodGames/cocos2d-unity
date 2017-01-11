@@ -6,7 +6,7 @@ namespace BBGamelib{
 	/*
 	 * A fake utHash used to replace the real utHash in cocos2d-objc.
 	 */
-	public class utHash<K, T> : Dictionary<K, T> where T : class
+	public class utHash<K, T> : Dictionary<K, T>
 	{
 		public void HASH_DEL(K key){
 			Remove (key);
@@ -16,11 +16,13 @@ namespace BBGamelib{
 			T value;
 			if (TryGetValue (key, out value))
 				return value;
-			else
-				return null;
+			else {
+				return default(T);
+			}
 		}
 
 		public void HASH_ADD_INT(K key, T value){
+			Remove (key);
 			Add (key, value);
 		}
 

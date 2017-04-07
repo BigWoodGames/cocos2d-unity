@@ -18,13 +18,22 @@ namespace BBGamelib.flash.imp
 			depth = Utils.ReadInt32(data, cursor);
 			cursor.index = nextIndex;
 		}
-		
-		public void applyFrameObj (Movie movie, Frame frame, FrameObject frameObj){
+
+        public void apply (Movie movie, FrameObject frameObj){
 			Display display = movie.depthDisplays [depth-1];
 			if (display != null) {
-				display.removeFromParent ();
-				movie.depthDisplays [depth - 1] = null;
-				display = null;
+
+                //cache
+                display.removed = true;
+                display.visible = false;
+                if (display is Movie)
+                {
+                    (display as Movie).movieCtrl.pause();
+                }
+
+//				display.removeFromParent ();
+//				movie.depthDisplays [depth - 1] = null;
+//				display = null;
 			}
 		}
 	}

@@ -28,7 +28,7 @@ namespace BBGamelib{
 				return null;
 			for(int i=0; i<_depthDisplays.Length; i++){
 				BBGamelib.flash.imp.Display child = _depthDisplays[i];
-				if(child!=null && child.define.className == name){
+                if(child!=null && !child.removed  && child.define.className == name){
 					return child as BBFlashMovie;
 				}
 			}
@@ -39,7 +39,7 @@ namespace BBGamelib{
 				return null;
 			for(int i=0; i<_depthDisplays.Length; i++){
 				BBGamelib.flash.imp.Display child = _depthDisplays[i];
-				if(child!=null && child.instanceName == name){
+                if(child!=null && !child.removed  && child.instanceName == name){
 					return child as BBFlashMovie;
 				}
 			}
@@ -51,7 +51,7 @@ namespace BBGamelib{
 			utList<BBFlashMovie> children = new utList<BBFlashMovie>();
 			for(int i=0; i<_depthDisplays.Length; i++){
 				BBGamelib.flash.imp.Display child = _depthDisplays[i];
-				if(child!=null && child.define.className == name){
+                if(child!=null && !child.removed && child.define.className == name){
 					children.DL_APPEND(child  as BBFlashMovie);
 				}
 			}
@@ -89,7 +89,9 @@ namespace BBGamelib{
 			return -1;
 		}
 		public void gotoAndPlay(int start, int end, BBFlashMovieCallback callback = null)
-		{
+        {
+            NSUtils.Assert(start <= end, "BBFlashMovie:gotoAndPlay: reverse play is not supported at current version.");
+            
 			_movieCtrl.callback = delegate {
 				if(callback != null)
 					callback(this);
@@ -109,8 +111,10 @@ namespace BBGamelib{
 		}
 
 		public void gotoAndStop(int frame){
-			_movieCtrl.stop ();
-			gotoFrame(frame);
+            _movieCtrl.stop ();
+            _movieCtrl.startFrame = frame;
+            _movieCtrl.endFrame = frame;
+            gotoFrame(frame, true);
 		}
 
 		public void gotoAndStop(string label){
@@ -127,11 +131,17 @@ namespace BBGamelib{
 			gotoAndPlay (0, this.totalFrames - 1, callback);
 		}
 
-		public override void gotoFrame (int frame)
+        /** Do not call this method.*/
+        public override void gotoFrame(int frameIndex, bool isCheckedPreTags)
+        {
+            base.gotoFrame(frameIndex, isCheckedPreTags);
+            if(_frameListener!=null && (this.curLabel!=null || _frameEventMode == kFrameEventMode.EveryFrame))
+                _frameListener (this);
+        }
+
+		public void gotoFrame (int frame)
 		{
-			base.gotoFrame (frame);
-			if(_frameListener!=null && this.curLabel!=null || _frameEventMode == kFrameEventMode.EveryFrame)
-				_frameListener (this);
+			gotoFrame (frame, true);
 		}
 
 		public void stop(){

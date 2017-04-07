@@ -67,102 +67,102 @@ namespace BBGamelib.flash.imp
 			cursor.index = nextIndex;
 		}
 
-		
-		public void applyFrameObj (Movie movie, Frame frame, FrameObject frameObj){
-			Display display = movie.depthDisplays [depth-1];
-			if (hasCharacter) {
-				if (hasMove && display != null) {
-					display.removeFromParent ();
-					movie.depthDisplays [depth - 1] = null;
-					display = null;
-				}
-				if(display == null)
-				{
-					TagDefine newCharacterDefine = flash.getDefine (characterId);
-					if (newCharacterDefine is TagDefineDisplay) {
-						display = flash.displayFactory.ctDisplay (newCharacterDefine as TagDefineDisplay);
-						movie.depthDisplays [depth - 1] = display;
-						movie.addChild (display);
-						if (display is Movie) {
-							(display as Movie).movieCtrl.start ();
-						}
-					}
-				}
+        public void apply (Movie movie, FrameObject frameObj){
+            Display display = movie.depthDisplays [depth-1];
+            if (hasCharacter)
+            {
+                if (display != null)
+                {
+                    if (hasMove || characterId != display.define.characterId)
+                    {
+                        display.removeFromParent();
+                        movie.depthDisplays [depth - 1] = null;
+                        display = null;
+                    }else
+                    {
+                        //reuse cache
+                        display.removed = false;
+                        if (display is Movie)
+                        {
+                            (display as Movie).movieCtrl.resume();
+                        }
+                    }
+                } 
+                if (display == null)
+                {
+                    TagDefine newCharacterDefine = flash.getDefine(characterId);
+                    if (newCharacterDefine is TagDefineDisplay)
+                    {
+                        display = flash.displayFactory.ctDisplay(newCharacterDefine as TagDefineDisplay);
+                        movie.depthDisplays [depth - 1] = display;
+                        movie.addChild(display);
+                        if (display is Movie)
+                        {
+                            (display as Movie).movieCtrl.start();
+                        }
+                    }
+                }
+                NSUtils.Assert(display != null, "TagPlaceObject#apply failed to create display.");
 
-				if(frame.frameIndex == movie.movieCtrl.startFrame){
-					fixFrame(movie, frame, frameObj);
-				}
-				
-				NSUtils.Assert (display != null, "Movie#applyTagPlaceObject try to reference a null display!");
-			}else if (display == null) {
-				TagDefine newCharacterDefine = flash.getDefine (frameObj.characterId);
-				if (newCharacterDefine is TagDefineDisplay) {
-					fixFrame(movie, frame, frameObj);
-				}
-				display = movie.depthDisplays [depth-1];
-				
-				NSUtils.Assert (display != null, "Movie#applyTagPlaceObject try to reference a null display!");
-			}
-			
-			if(display != null){
-				if (hasMatrix) {
-					float preScale = display.define.preScale;
-					display.position = new Vector2(position.x, -position.y);
-					display.rotation = rotation;
-					display.scaleX = scaleX/preScale;
-					display.scaleY = scaleY/preScale;
-				}else if(frame.frameIndex == 0){
-					float preScale = display.define.preScale;
-					display.position = Vector2.zero;
-					display.rotation = 0;
-					display.scaleX = preScale;
-					display.scaleY = preScale;
-				}
+                display.position = Vector2.zero;
+                display.rotation = 0;
+                display.scaleX = display.define.preScale;
+                display.scaleY = display.define.preScale;
+                display.zOrder = depth;
+                if (display.hasUserVisible)
+                {
+                    display.visible = display.userVisible;
+                } else
+                {
+                    display.visible = true;
+                }
+                if (display.hasUserColorTransform)
+                {
+                    display.colorTransform = display.userColorTransform;;
+                    display.opacityTransform = new OpacityTransform(display.userColorTransform.tint.a, display.userColorTransform.add.a);
 
-				if(hasVisible)
-					display.visible = visible;
-				else if(frame.frameIndex == 0){
-					display.visible = true;
-				}
+                } else
+                {
+                    display.colorTransform = ColorTransform.Default;
+                    display.opacityTransform = new OpacityTransform(display.userColorTransform.tint.a, display.userColorTransform.add.a);
+                }
+            } 
+            NSUtils.Assert(display != null, "TagPlaceObject#apply try to reference a null display.");
 
-				display.zOrder = depth;
-				
-				if (hasColorTransform) {
-					display.colorTransform = colorTransform;
-					display.opacityTransform = new OpacityTransform(colorTransform.tint.a, colorTransform.add.a);
-				} 
-				else if(frame.frameIndex == 0){
-					display.colorTransform = ColorTransform.Default;
-					display.opacityTransform = new OpacityTransform(display.colorTransform.tint.a, display.colorTransform.add.a);
-				}
-				display.instanceName = instanceName;
-			}
-		}
 
-		void fixFrame(Movie movie, Frame frame, FrameObject frameObj){
-			int lastKeyFrameIndex = -1;
-			for(int i=frame.frameIndex; i>=0; i--){
-				Frame preFrame = movie.movieDefine.frames[i];
-				for(int j=0; j<preFrame.objs.Length; j++){
-					FrameObject preFrameObj = preFrame.objs[j];
-					if(preFrameObj.isKeyFrame && preFrameObj.placedAtIndex == frameObj.placedAtIndex){
-						lastKeyFrameIndex = i;
-						break;
-					}
-				}
-				if(lastKeyFrameIndex>=0)
-					break;
-			}
-			for(int i=lastKeyFrameIndex; i<frame.frameIndex; i++){
-				Frame preFrame = movie.movieDefine.frames[i];
-				for(int j=0; j<preFrame.objs.Length; j++){
-					FrameObject preFrameObj = preFrame.objs[j];
-					if(preFrameObj.placedAtIndex == frameObj.placedAtIndex){
-						movie.applyFrameObj(preFrame, preFrameObj);
-					}
-				}
-			}
-		}
+            if(display != null){
+                if (hasMatrix) {
+                    float preScale = display.define.preScale;
+                    display.position = new Vector2(position.x, -position.y);
+                    display.rotation = rotation;
+                    display.scaleX = scaleX/preScale;
+                    display.scaleY = scaleY/preScale;
+                }
+                if (hasVisible)
+                {
+                    if (display.hasUserVisible)
+                    {
+                        display.visible = display.userVisible;
+                    } else
+                    {
+                        display.visible = visible;
+                    }
+                }
+                if (hasColorTransform) {
+                    if (display.hasUserColorTransform)
+                    {
+                        display.colorTransform = display.userColorTransform;;
+                        display.opacityTransform = new OpacityTransform(display.userColorTransform.tint.a, display.userColorTransform.add.a);
+                        
+                    } else
+                    {
+                        display.colorTransform = colorTransform;
+                        display.opacityTransform = new OpacityTransform(colorTransform.tint.a, colorTransform.add.a);
+                    }
+                } 
+                display.instanceName = instanceName;
+            }
+        }
 	}
 }
 

@@ -39,10 +39,11 @@ namespace BBGamelib.flash.imp
 		public void start(){
 			if(_isPlaying)
 				stop ();
-			_movie.gotoFrame(_startFrame);
+			gotoFrame(_startFrame);
 			if (_startFrame != _endFrame) {
 				_isPlaying = true;
 				_paused = false;
+                _elapsed = 0;
 				_movie.schedule(this.update);
 			}
 		}
@@ -69,9 +70,12 @@ namespace BBGamelib.flash.imp
 		}
 
 		public void resume(){
-			_paused = false;
-			if(_isPlaying)
-				_movie.schedule (this.update);
+            if (_paused)
+            {
+                _paused = false;
+                if (_isPlaying)
+                    _movie.schedule(this.update);
+            }
 		}
 
 		public void reset(){
@@ -95,68 +99,54 @@ namespace BBGamelib.flash.imp
 			if (_paused)
 				return;
 			_elapsed += dt;
-			//Make sure endFrame not equals to startFrame when init
-			if (_endFrame > _startFrame) {
-				int toFrame = _startFrame + Mathf.FloorToInt (_elapsed * _fps);
-				bool isEnd = toFrame >= _endFrame;
-				if(toFrame > _endFrame){
-					_elapsed -= Mathf.Abs(_endFrame - _startFrame + 1)/_fps;
-					toFrame = _startFrame + Mathf.FloorToInt (_elapsed * _fps);
-				}
-				toFrame = Mathf.Min (toFrame, _endFrame);
-				
-				int nextFrame = _movie.curFrame + 1;
-				if(nextFrame > _endFrame){
-					nextFrame = _startFrame;
-				}
+            int dFrame = Mathf.FloorToInt(_elapsed * _fps);
+            if (dFrame > 0)
+            {
+                _elapsed -= dFrame / _fps;
+                int toFrame = _movie.curFrame + dFrame;
+                if (_loop)
+                {
+                    int curFrame = _movie.curFrame;
+                    if (toFrame > _endFrame)
+                    {
+                        toFrame = _startFrame + (toFrame - _endFrame) % (_endFrame - _startFrame + 1);
+                        for (int i = _movie.curFrame + 1; i <= _endFrame; i++)
+                        {
+                            gotoFrame(i);
+                        }
+                        onEnd();
+                        curFrame = _startFrame-1;
+                    }
 
-				if(toFrame > nextFrame){
-					for (int i=nextFrame; i < toFrame; i++) {
-						if(_movie.tweenMode == kTweenMode.SkipFrames || (_movie.tweenMode==kTweenMode.SkipNoLabelFrames && _movie.movieDefine.frames[i]==null))
-							_movie.skipFrame(i);
-						else
-							_movie.gotoFrame(i);
-					}
-				}
-				if(toFrame != _movie.curFrame){
-					_movie.gotoFrame(toFrame);
-					if (isEnd) {
-						onEnd();
-					}
-				}
-			} else {
-				int toFrame = _startFrame + Mathf.FloorToInt (_elapsed * _fps);
-				bool isEnd = toFrame >= _endFrame;
-				if(toFrame < _startFrame){
-					_elapsed -= Mathf.Abs(_endFrame - _startFrame + 1)/_fps;
-					toFrame = _startFrame + Mathf.FloorToInt (_elapsed * _fps);
-				}
-				toFrame = Mathf.Max (toFrame, _endFrame);
-				int nextFrame = _movie.curFrame - 1;
-				if(nextFrame < _startFrame){
-					nextFrame = _endFrame;
-				}
+                    for (int i = curFrame + 1; i <= toFrame; i++)
+                    {
+                        gotoFrame(i);
+                    }
+                    if (toFrame == _endFrame)
+                    {
+                        onEnd();
+                    }
+                } else
+                {
+                    toFrame = System.Math.Min(_endFrame, toFrame);
+                    if (toFrame != _movie.curFrame)
+                    {
+                        for (int i = _movie.curFrame + 1; i <= toFrame; i++)
+                        {
+                            gotoFrame(i);
+                        }
+                        if (toFrame == _endFrame)
+                        {
+                            onEnd();
+                        }
+                    }
+                }
+            }
+		}
 
-				if(toFrame < nextFrame){
-					for (int i=nextFrame; i > toFrame; i--) {
-						if(_movie.tweenMode == kTweenMode.SkipFrames || (_movie.tweenMode==kTweenMode.SkipNoLabelFrames && _movie.movieDefine.frames[i]==null))
-							_movie.skipFrame(i);
-						else
-							_movie.gotoFrame(i);
-					}
-				}
-				if(toFrame != _movie.curFrame){
-					_movie.gotoFrame(toFrame);
-					if (isEnd) {
-						onEnd();
-					}
-				}
-			}
-		}
-		
-		void resetMovie(){
-			
-		}
+        void gotoFrame(int frameIndex){
+            _movie.gotoFrame(frameIndex, frameIndex == _startFrame);
+        }
 
 		void onEnd(){
 			if(!_loop)

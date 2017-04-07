@@ -115,8 +115,8 @@ namespace BBGamelib{
 
 		void removeHashElement(tHashTimerEntry element){
 			hashForTimers.HASH_DEL (element.target.GetHashCode());
-			element.timers = null;
-			element.target = null;
+//			element.timers = null;
+//			element.target = null;
 		}
 
 

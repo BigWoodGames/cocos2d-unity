@@ -13,9 +13,28 @@ namespace BBGamelib.flash.imp
 		protected string _instanceName;
 		public string instanceName{ get { return _instanceName; } set { _instanceName = value; } }
 
+        protected bool _removed;
+        public bool removed{ get { return _removed; } set { _removed = value; } }
+
+        //user setting
+        protected bool _hasUserVisible;
+        protected bool _userVisible;
+        protected bool _hasUserColorTransform;
+        protected ColorTransform _userColorTransform;
+
+        public bool hasUserVisible{ get { return _hasUserVisible; } set { _hasUserVisible = value; } }
+        public bool userVisible{ get { return _userVisible; } set { _userVisible = value; } }
+        public bool hasUserColorTransform{ get { return _hasUserColorTransform; } set { _hasUserColorTransform = value; } }
+        public ColorTransform userColorTransform{ get { return _userColorTransform; } set { _userColorTransform = value; } }
+
 		public Display(){
 			this.cascadeColorEnabled = true;
 			this.cascadeOpacityEnabled = true;
+            _removed = false;
+            _hasUserVisible = false;
+            _userVisible = true;
+            _hasUserColorTransform = false;
+            _userColorTransform = ColorTransform.Default;
 		}
 	}
 }

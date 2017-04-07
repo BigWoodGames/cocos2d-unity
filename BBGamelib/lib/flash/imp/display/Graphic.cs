@@ -24,6 +24,13 @@ namespace BBGamelib.flash.imp{
 			_view.gameObject.name = define.characterId.ToString();
 			_view.opacityModifyRGB = false;
 			addChild (_view);
+            if (string.IsNullOrEmpty(define.className))
+            {
+                this.nameInHierarchy = define.characterId.ToString();
+            } else
+            {
+                this.nameInHierarchy = define.className;
+            }
         }
         
 		// ------------------------------------------------------------------------------

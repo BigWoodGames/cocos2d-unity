@@ -30,7 +30,14 @@ namespace BBGamelib.flash.imp
 			_isBoundsDirty = true;
 			_tweenMode = kTweenMode.SkipNoLabelFrames;
 			_depthDisplays = new Display[define.maxDepth];
-			_movieCtrl = new MovieCtrl (this);
+            _movieCtrl = new MovieCtrl (this);
+            if (string.IsNullOrEmpty(define.className))
+            {
+                this.nameInHierarchy = define.characterId.ToString();
+            } else
+            {
+                this.nameInHierarchy = define.className;
+            }
 		}
 
 		
@@ -67,43 +74,114 @@ namespace BBGamelib.flash.imp
 		// ------------------------------------------------------------------------------
 		public TagDefineMovie movieDefine{ get { return _define; } }
 		public int curFrame{ get{return _curFrame==null?-1:_curFrame.frameIndex;}}
-		public string curLabel{get{return _curFrame.label;}}
-		public Display[] depthDisplays{ get { return _depthDisplays; } }
+        public string curLabel{get{return _curFrame.label;}}
+        public Display[] depthDisplays{ get { return _depthDisplays; } }
 		public MovieCtrl movieCtrl{ get { return _movieCtrl; } }
 		public kTweenMode tweenMode{get{return _tweenMode;} set{_tweenMode=value;}}
 
+        /** Do not call this method.*/
+        public virtual void gotoFrame(int frameIndex, bool isCheckedPreTags){
+            if (_curFrame == null || _curFrame.frameIndex != frameIndex)
+            {
+                _curFrame = _define.frames [frameIndex];
 
-		public virtual void skipFrame(int frameIndex){
-			if (_curFrame.frameIndex != frameIndex) {
-				_curFrame = _define.frames[frameIndex];
-				for(int i=0; i<_depthDisplays.Length; i++){
-					Display display = _depthDisplays[i];
-					if(display != null)
-						display.visible = false;
-				}
-			}
+                if (isCheckedPreTags)
+                {
+                    for (int i = 1; i <= _depthDisplays.Length; i++)
+                    {
+                        applyPreKeyTags(frameIndex, i);
+                    }
+                } else
+                {
+                    for (int i = 0; i < _curFrame.objs.Length; i++)
+                    {
+                        FrameObject frameObj = _curFrame.objs [i];
+                        ITag iTag = getTag(frameObj);
+                        if (iTag is IDisplayListTag) {
+                            (iTag as IDisplayListTag).apply(this, frameObj);
+                        }
+                    }
+                }
+                _isBoundsDirty = true;
+            }
 		}
-		public virtual void gotoFrame(int frameIndex){
-			if (_curFrame ==null || _curFrame.frameIndex != frameIndex) {
-				_curFrame = _define.frames[frameIndex];
 
-				for(int i=0; i<_curFrame.objs.Length; i++){
-					FrameObject fobj = _curFrame.objs[i];
-					applyFrameObj(_curFrame, fobj);
-				}
-				_isBoundsDirty = true;
-			}
-		}
-		public void applyFrameObj(Frame frame, FrameObject frameObj){
-			ITag iTag = null;
-			if(frameObj.lastModfiedAtIndex != 0){
-				iTag = _define.tags[frameObj.lastModfiedAtIndex];
-			}else{
-				iTag = _define.tags[frameObj.placedAtIndex];
-			}
-			if (iTag is IDisplayListTag) {
-				(iTag as IDisplayListTag).applyFrameObj(this, frame, frameObj);
-			}
-		}
+        void applyPreKeyTags(int fromFrameIndex, int depth){
+            utList<FrameObject> preTags = new utList<FrameObject>();
+            bool removed = false, hasCharacter = false;
+            int i = fromFrameIndex;
+            for (; i >= 0; i--)
+            {
+                Frame frame = _define.frames [i];
+                for (int k = 0; k < frame.objs.Length; k++)
+                {
+                    FrameObject frameObj = frame.objs [k];
+                    ITag iTag = getTag(frameObj);
+                    if (iTag is TagRemoveObject)
+                    {
+                        TagRemoveObject tagRemoveObj = iTag as TagRemoveObject;
+                        if (tagRemoveObj.depth == depth)
+                        {
+                            preTags.DL_APPEND(frameObj);
+                            removed = true;
+                            break;
+                        }
+                    } else if (iTag is TagPlaceObject)
+                    {
+                        TagPlaceObject tagPlaceObj = iTag as TagPlaceObject;
+                        if (tagPlaceObj.depth == depth)
+                        {
+                            preTags.DL_APPEND(frameObj);
+                            hasCharacter |= tagPlaceObj.hasCharacter;
+                            if (hasCharacter)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (removed || (hasCharacter))
+                {
+                    break;
+                }
+            }
+            if (preTags.head != null)
+            {             
+                for (var ent = preTags.head.prev; ent != preTags.head; ent = ent.prev)
+                {
+                    FrameObject frameObj = ent.obj;
+                    IDisplayListTag iTag = getTag(frameObj) as IDisplayListTag;
+                    iTag.apply(this, frameObj);
+                }
+                {
+                    FrameObject frameObj = preTags.head.obj;
+                    IDisplayListTag iTag = getTag(frameObj) as IDisplayListTag;
+                    iTag.apply(this, frameObj);
+                }
+            } else
+            {
+                Display display = _depthDisplays [depth-1];
+                if (display != null) {
+
+                    //cache
+                    display.removed = true;
+                    display.visible = false;
+                    if (display is Movie)
+                    {
+                        (display as Movie).movieCtrl.pause();
+                    }
+                }
+            }
+        }
+        ITag getTag(FrameObject frameObj){
+            ITag iTag = null;
+            if(frameObj.lastModfiedAtIndex != 0){
+                iTag = _define.tags[frameObj.lastModfiedAtIndex];
+            }else{
+                iTag = _define.tags[frameObj.placedAtIndex];
+            }
+            return iTag;
+        }
 	}
 }

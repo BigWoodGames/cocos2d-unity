@@ -53,7 +53,6 @@ namespace BBGamelib{
 				text = zip.unZip (text);
 			return text;
 		}
-
 		
 		//StreamingAssets
 		public static byte[] ReadBytesFromStreamAssets(string file){
@@ -97,6 +96,14 @@ namespace BBGamelib{
 		public static void DeleteFile(string path){
 			File.Delete (path);
 		}
+
+        public static string GetFilePathWithoutExtends(string path){
+            string ext = Path.GetExtension (path);
+            if(ext!=null && ext.Length>0)
+                path = path.Replace (ext, "");
+            return path;
+        }
+
 		#else
 		public static string ReadTextFileFromExternal(string path, ZipDelegate zip=null){
 			string result = PlayerPrefs.GetString (path);

@@ -22,8 +22,6 @@ namespace BBGamelib{
 		// ------------------------------------------------------------------------------
 		public const string KEY_NODE = "CCFactory.NODE";
 		public const string KEY_SPRITE = "CCFactory.SPRITE";
-		public const string KEY_SPRITE_BOXCOLLIDER2D = "CCFactory.SPRITE_BOXCOLLIDER2D";
-		public const string KEY_SPRITE_CIRCLECOLLIDER2D = "CCFactory.SPRITE_CIRCLECOLLIDER2D";
 		public const string KEY_LABEL = "CCFactory.LABEL";
 		public const string LAYER_DEFAULT = "Default";
 		
@@ -87,17 +85,10 @@ namespace BBGamelib{
 			generateGearsInEditMode (KEY_NODE, null, num);
 		}
 		public void generateSpriteGearsInEditMode(int num){
-			generateGearsInEditMode (KEY_SPRITE, new Type[1]{typeof(SpriteRenderer)}, num);
-
-			Material sptMat = Resources.Load<Material> ("BBGamelib/CCSprite");
-			Storage sptStorage = getStorage (KEY_SPRITE, false);
-			foreach (var gear in sptStorage.gears) {
-				SpriteRenderer render = gear.components[0] as SpriteRenderer;
-				render.material = sptMat;
-			}
+            generateGearsInEditMode (KEY_SPRITE, CCSprite.kGearTypes, num);
 		}
 		public void generateLabelGearsInEditMode(int num){
-			generateGearsInEditMode (KEY_LABEL, new Type[2]{typeof(MeshRenderer), typeof(TextMesh)}, num);
+            generateGearsInEditMode (KEY_LABEL, CCLabelTTF.kGearTypes, num);
 		}
 
 		public void generateGearsInEditMode(string category, Type[] componentTypes, int num){

@@ -1,274 +1,373 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
-using BBGamelib;
-using System.Collections.Generic;
-using System;
-using System.Linq;
+using UnityEngine.Rendering;
 
-namespace BBGamelib{
-	public class CC3Sprite : CC3Prefab
-	{
-		public enum kFrameEventMode{
-			LabelFrame,
-			EveryFrame,
-		}
-		public delegate void Callback(CC3Sprite spt);
-		float _fpsScale;
-		Animation _fbxAnimation;
-		AnimationState _currentAnimationState;
-		int _currentFrame;
-		List<string> _currentLabels;
-		Dictionary<int, List<string>> _labels;
-		float _elapsed;
-		bool _loop;
-		int _startFrame;
-		int _endFrame;
-		Callback _endCall;
-		Callback _frameEventCall;
-		kFrameEventMode _frameEventMode;
-		bool _isRuningAnimation;
+namespace BBGamelib
+{
+    public class CC3Sprite : CC3Node
+    {
+        // ------------------------------------------------------------------------------
+        //  init
+        // ------------------------------------------------------------------------------
+        CCSpriteFrame _spriteFrame;
+        bool    _flipX;
+        bool    _flipY;
+        bool _meshDirty;
+        bool _clippingEnabled;
+        Rect _clippingRect;
 
-		Dictionary<string, AnimationClip> _clips;
-		Dictionary<string, Dictionary<int, List<string>>> _allLabels;
+        public CC3Sprite(string imagedName)
+        {
+            initWithImageNamed(imagedName);
+        }
 
-		public bool loop{get{return _loop;} set{_loop=value;}}
-		public string currentAnimeName{get{return _currentAnimationState==null?null:_currentAnimationState.name;}}
-		public int currentFrame{get{return _currentFrame;}}
-		public List<string> currentLabels{get{return _currentLabels;}}
-		public string currentLabel{get{return (_currentLabels!=null && _currentLabels.Any ())?_currentLabels[0]:null;}}
-		public Dictionary<int, List<string>> labels{get{return _labels;}}
-		public Callback frameEventCall{get{return _frameEventCall;}set{_frameEventCall=value;}}
-		public kFrameEventMode frameEventMode{get{return _frameEventMode;} set{_frameEventMode = value;}}
+        protected override void init()
+        {
+            CCFactoryGear gear = CCFactory.Instance.takeGear (CCFactory.KEY_SPRITE);
+            initWithGear (gear);
+            this.meshRender.sortingOrder = 0;
+            this.meshRender.shadowCastingMode = ShadowCastingMode.Off;
+            this.meshRender.receiveShadows = true;
+            this.meshRender.motionVectors = true;
+            _clippingEnabled = false;
+        }      
 
-		public CC3Sprite(string path) : base(path)
-		{
-			_fbxAnimation = _prefabObj.GetComponent<Animation>();
-			_fpsScale = 1;
-			_loop = false;
-			schedule (updateFrame);
-			_currentLabels = null;
-			_frameEventMode = kFrameEventMode.LabelFrame;
-			_isRuningAnimation = false;
-			_allLabels = new Dictionary<string, Dictionary<int, List<string>>>  ();
-		}
-		
-		public void addAnimationClip(string path){
-			AnimationClip[] clips = CC3SpriteFactory.Instance.getAnimationClips (path, true);
-			for (int i=0; i<clips.Length; i++) {
-				_fbxAnimation.AddClip (clips[i], clips[i].name);
-			}
-		}
+        public void initWithImageNamed(string imageName)
+        {
+            gameObject.name = imageName;
+            CCSpriteFrame frame = CCSpriteFrameCache.sharedSpriteFrameCache.spriteFrameByName (imageName);
+            if (frame == null) {
+                CCDebug.Info("cocos2d:CC3Sprite: try to load '{0}' as a file.", imageName);
+                string path = FileUtils.GetFilePathWithoutExtends(imageName);
+                Texture2D texture = Resources.Load<Texture2D> (path);
+                NSUtils.Assert(texture != null, "cocos2d:CCSprite: '{0}' not found.", imageName);
+                frame = new CCSpriteFrame (texture, new Rect(Vector2.zero, new Vector2(texture.width, texture.height)));
+                frame.semiTransparent = false;
+            }
+            initWithSpriteFrame (frame);
+        }
 
-		public void setAnimation(string name){
-			setAnimationState (name);
-		}
+        public void initWithSpriteFrame(CCSpriteFrame spriteFrame)
+        { 
+            _flipY = _flipX = false;
+            _anchorPoint = new Vector2(0.5f, 0.5f);
+            this.displayedFrame = spriteFrame;
+        }
 
-		public bool hasAnimation(string name){
-			return _fbxAnimation.GetClip (name) != null;
-		}
+        protected override void recycleGear()
+        {
+            CCFactory.Instance.recycleGear(CCFactory.KEY_SPRITE, _gear);
+        }
+        // ------------------------------------------------------------------------------
+        //  public methods
+        // ------------------------------------------------------------------------------
+        public MeshFilter meshFilter
+        { 
+            get { return _gear.components [0] as MeshFilter; } 
+        }
 
-		public void playAnimation(string name, Callback endCallback=null){
-			playAnimation (name, 0, int.MaxValue, endCallback);
-		}
+        public MeshRenderer meshRender
+        { 
+            get { return _gear.components [1] as MeshRenderer; } 
+        }
 
-		public void playAnimation(string name, int start, int end, Callback endCallback=null){
-			NSUtils.Assert (start >= 0, "CC3Sprite#playAnimation start frame should not be {0}.", start);
-			NSUtils.Assert (end >= 0, "CC3Sprite#playAnimation start frame should not be {0}.", end);
-			stop ();
-			_endCall = endCallback;
-			setAnimationState (name);
-			
-			if (_currentAnimationState != null) {
-				_currentAnimationState.speed = 0;
-				_startFrame = Math.Max (start, 0);
-				_currentFrame = _startFrame;
-				_endFrame = Mathf.FloorToInt (Mathf.Min (end, totalFrames - 1));
-				gotoFrame (_startFrame);
-				_isRuningAnimation = true;
-			}
-		}
+        public CCSpriteFrame displayedFrame{
+            get{ return _spriteFrame;}
+            set{ 
+                _spriteFrame = value;
+                this.contentSize = value.originalSize;
 
-		public void playAnimation(string name, string startLabel, string endLabel, Callback endCallback=null){
-			setAnimationState (name);
-			int startFrame = getFrame (startLabel);
-			NSUtils.Assert (startFrame != -1, "CC3Sprite#playAnimation startLabel {0} not found.", startLabel);
-			int endFrame = getFrame (endLabel);
-			NSUtils.Assert (endFrame != -1, "CC3Sprite#playAnimation endLabel {0} not found.", endLabel);
-			playAnimation (name, startFrame, endFrame, endCallback);
-		}
+                if (this.meshRender.sharedMaterial == null || this.meshRender.sharedMaterial.mainTexture != _spriteFrame.texture)
+                {
+                    this.meshRender.sharedMaterial = CCMaterialCache.sharedMaterialCache.getMaterial(_spriteFrame.texture);
+                    if (_spriteFrame.semiTransparent)
+                    {
+                        ccUtils.SetRenderValue(this.meshRender, "_ZWrite", 0);
+                        this.renderQueue = RenderQueue.Transparent;
+                        this.renderType = "Transparent";
+                    } else
+                    {
+                        ccUtils.SetRenderValue(this.meshRender, "_ZWrite", 1);
+                        this.renderQueue = RenderQueue.Geometry;
+                        this.renderType = "Opaque";
+                    }
+                    ccUtils.SetRenderValue (this.meshRender, "_CullMode", (int)CullMode.Back);
+                }
+                _meshDirty = true;
+            }
+        }
 
-		public void gotoLabel(string name, string label){
-			int frame = getFrame (label);
-			gotoFrame (name, frame);
-		}
+        public CullMode cullMode
+        {
+            get{ return (CullMode)this.meshRender.sharedMaterial.GetInt("_CullMode"); }
+            set{ ccUtils.SetRenderValue (this.meshRender, "_CullMode", (int)value);}
+        }
 
-		public void gotoFrame(string name, int frame){
-			stop ();
-			setAnimationState (name);
-			_currentAnimationState.speed = 0;
-			gotoFrame(frame);
-		}
+        public RenderQueue renderQueue
+        {
+            get{ return (RenderQueue)this.meshRender.sharedMaterial.renderQueue; }
+            set{ this.meshRender.material.renderQueue = (int)value; }
+        }
 
-		public void stop(){
-			_isRuningAnimation = false;
-			_elapsed = 0;
-			_currentAnimationState = null;
-		}
+        public string renderType
+        {
+            get{ return this.meshRender.sharedMaterial.GetTag("RenderType", false); }
+            set{ this.meshRender.material.SetOverrideTag("RenderType", value); }
+        }
 
-		public float currentAnimationDruation{
-			get{
-				if(_currentAnimationState == null)
-					return 0;
-				return _currentAnimationState.length;
-			}
-		}
+        public int zWrite
+        {
+            get{ return this.meshRender.sharedMaterial.GetInt("_ZWrite"); }
+            set{ ccUtils.SetRenderValue (this.meshRender, "_ZWrite", value); }
+        }
 
-		public int getFrame(string label){
-			if (_labels != null) {
-				var frameLabelsEnu = _labels.GetEnumerator();
-				while(frameLabelsEnu.MoveNext()){
-					var kv = frameLabelsEnu.Current;
-					int frame = kv.Key;
-					List<string> labels = kv.Value;
-					if(labels.Contains(label))
-						return frame;
-				}
-			}
-			return -1;
-		}
+        public bool receiveShadows
+        {
+            get{ return this.meshRender.receiveShadows; }
+            set{ this.meshRender.receiveShadows = value; }
+        }
 
-		public float frameRate{
-			get{
-				if (_currentAnimationState != null && _currentAnimationState.clip != null)
-					return _currentAnimationState.clip.frameRate;
-				return -1;
-			}
-		}
+        public virtual bool flipX
+        {
+            get{ return _flipX; }
+            set
+            {
+                if (_flipX != value)
+                {
+                    _flipX = value;
+                    _isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
+                }
+            }
+        }
 
-		public int totalFrames{
-			get{
-				if (_currentAnimationState != null && _currentAnimationState.clip != null){
-					int totalFrames = Mathf.FloorToInt (_currentAnimationState.clip.length * _currentAnimationState.clip.frameRate) + 1;
-					return totalFrames;
-				}else{
-					return 0;
-				}
-			}
-		}
+        public virtual bool flipY
+        {
+            get{ return _flipY; }
+            set
+            {
+                if (_flipY != value)
+                {
+                    _flipY = value;
+                    _isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
+                }
+            }
+        }
 
-		void setAnimationState(string name){
-			NSUtils.Assert (_fbxAnimation != null, "animation of {0} is null.", name);
-			if (name == currentAnimeName) {
-				return;
-			}
-			_fbxAnimation.Play(name);
-			_currentAnimationState = _fbxAnimation [name];
-			NSUtils.Assert (_currentAnimationState != null, "{0}#{1} is null.", _fbxAnimation.name, name);
-			
-			_elapsed = 0;
-			_currentFrame = -1;
-			_currentLabels = null;
-			_startFrame = 0;
-			_endFrame = 0;
+        public override Vector2 anchorPoint
+        {
+            set
+            {
+                base.anchorPoint = value;
+                _meshDirty = true;
+            }
+        }
 
-			_labels = null;
-			if (_currentAnimationState.clip != null) {
-				if(!_allLabels.TryGetValue(name, out _labels)){
-					_labels = new Dictionary<int, List<string>>();
-					_allLabels.Add(name, _labels);
-					AnimationEvent[] events = _currentAnimationState.clip.events;
-					for (int i=0; i<events.Length; i++) {
-						AnimationEvent evt = events [i];
-						int frame = Mathf.FloorToInt (evt.time * _currentAnimationState.clip.frameRate);
-						List<string> labelsOfFrame = null;
-						_labels.TryGetValue(frame, out labelsOfFrame);
-						if(labelsOfFrame == null){
-							labelsOfFrame = new List<string>();
-							_labels[frame] = labelsOfFrame;
-						}
-						labelsOfFrame.Add(evt.functionName);
-					}
-				}
-			}
-		}
-		
-		void gotoFrame(int frame){
-			if (_currentFrame != frame) {
-				_isBoundsDirty = true;
-			}
-			_currentFrame = frame;
-			_currentLabels = null;
-			if (_labels != null) {
-				_labels.TryGetValue(frame, out _currentLabels);
-			}
-			if (_currentAnimationState != null) {
-				float time = frame / _currentAnimationState.clip.frameRate;
-				//in case animation goto first frame immediatlly in loop mode
-				if(_currentAnimationState.wrapMode == WrapMode.Loop)
-					time = Mathf.Min (_currentAnimationState.length - 1/_currentAnimationState.clip.frameRate/2, time);
-				_currentAnimationState.time = time; 
-			}
-			if(_frameEventCall != null){
-				if( _frameEventMode == kFrameEventMode.EveryFrame || (_currentLabels!=null && _currentLabels.Any())){
-					_frameEventCall(this);
-				}
-			}
-		}
-		protected virtual void updateFrame (float dt)
-		{
-			if (!_isRuningAnimation)
-				return;
+        public void enableClipping(Rect clippingRect)
+        {
+            _clippingEnabled = true;
+            _clippingRect = clippingRect;
+            _meshDirty = true;
+        }
 
-			if (_currentAnimationState == null) {
-				return;
-			}
-			_elapsed += dt;
-			bool visible = this.visible;
-			for (var p = this.parent; p!=null; p=p.parent) {
-				if(!p.visible){
-					visible = false;
-					break;
-				}
-			}
-			if (!visible) {
-				return;
-			}
-			if (_fbxAnimation.clip == null || _fbxAnimation.clip.name != _currentAnimationState.clip.name) {
-				_fbxAnimation.Play(_currentAnimationState.clip.name);
-			}
-			float realElapsed = _elapsed * _fpsScale;
-			int toFrame = Mathf.FloorToInt(realElapsed * _currentAnimationState.clip.frameRate) + _startFrame;
-			if (_loop) {
-				while (toFrame > _endFrame) {
-					int nextFrame = _currentFrame + 1;
-					while (nextFrame<=_endFrame) {
-						gotoFrame(nextFrame);
-						nextFrame  ++;
-					}
-					gotoFrame(0);
-					nextFrame=1;
+        public void disableClipping()
+        {
+            _clippingEnabled = false;
+            _meshDirty = true;
+        }
 
-					realElapsed -= (_endFrame - _startFrame + 1) / _currentAnimationState.clip.frameRate;
-					toFrame = Mathf.FloorToInt(realElapsed * _currentAnimationState.clip.frameRate) + _startFrame;
-				}
-				_elapsed = realElapsed / _fpsScale;
-			} else {
-				toFrame = Math.Min (toFrame, _endFrame);
-			}
-			if (toFrame != _currentFrame) {
-				int nextFrame = _currentFrame + 1;
-				while (nextFrame<toFrame) {
-					gotoFrame(nextFrame);
-					nextFrame  ++;
-				}
 
-				gotoFrame(toFrame);
-				if(toFrame == _endFrame && _endCall != null){
-					_elapsed = 0;
-					_startFrame = _endFrame;
-					_endCall(this);
-				}
-			}
-		}
-	}
+        public override string ToString ()
+        {
+            return string.Format ("<{0} = {1} | Size = ({2:0.00},{3:0.00},{4:0.00},{5:0.00}) | tag = {6}>", 
+                GetType().Name, GetHashCode(),
+                position.x, position.y,
+                contentSize.x, contentSize.y,
+                _userTag);
+        }
+
+        // ------------------------------------------------------------------------------
+        //  color & opacity
+        // ------------------------------------------------------------------------------
+        public void updateColor()
+        {
+            Color32 tint = _displayedColor.tint;
+            tint.a = _displayedOpacity.tint;
+            Color32 add = _displayedColor.add;
+            add.a = _displayedOpacity.add;
+            ccUtils.SetRenderColor (this.meshRender, tint, add);
+        }
+
+        public override Color32 color
+        {
+            set
+            {
+                base.color = value;
+                updateColor();
+            }
+        }
+
+        public override ColorTransform colorTransform
+        {
+            get
+            {
+                return base.colorTransform;
+            }
+            set
+            {
+                base.colorTransform = value;
+                updateColor();
+            }
+        }
+
+
+        public override void updateDisplayedColor (ColorTransform parentColor)
+        {
+            base.updateDisplayedColor (parentColor);
+            updateColor ();
+        }
+
+        public override byte opacity
+        {
+            set
+            {
+                base.opacity = value;
+                updateColor();
+            }
+        }
+
+        public override void updateDisplayedOpacity (OpacityTransform parentOpacity)
+        {
+            base.updateDisplayedOpacity (parentOpacity);
+            updateColor ();
+        }
+
+        // ------------------------------------------------------------------------------
+        //  draw & updateTransform
+        // ------------------------------------------------------------------------------
+        protected override void draw ()
+        {
+            ccUtils.CC_INCREMENT_GL_DRAWS ();
+            updateMesh();
+        }
+
+        protected virtual void updateMesh()
+        {
+            if (_meshDirty)
+            {
+                CCSpriteFrame spriteFrame = _spriteFrame;
+                Rect textureRect = spriteFrame.textureRect;
+                float textureWidth = spriteFrame.texture.width;
+                float textureHeight = spriteFrame.texture.height;
+                float textureRectWidth = textureRect.width;
+                float textureRectHeigh = textureRect.height;
+
+                Vector2 anchorPointInPixels = this.anchorPointInPixels;
+                Vector2 contentSize = this.contentSize;
+                Vector2 spriteOffset = spriteFrame.offset;
+                float viewWidth = textureRectWidth, viewHeight = textureRectHeigh;
+                if (spriteFrame.rotated)
+                {
+                    viewWidth = textureRectHeigh;
+                    viewHeight = textureRectWidth;
+                }
+                Vector2 center = spriteOffset + contentSize / 2 - anchorPointInPixels;
+                Rect viewRect = new Rect(center.x -  viewWidth / 2, center.y -  viewHeight / 2, viewWidth, viewHeight);
+                Rect clippingViewRect = viewRect;
+                if (_clippingEnabled)
+                {
+                    clippingViewRect = ccUtils.RectIntersection(viewRect, _clippingRect);
+                }
+
+                Vector3[] vertices = new Vector3[4]
+                {
+                    new Vector3(clippingViewRect.xMin, clippingViewRect.yMax, 0) / UIWindow.PIXEL_PER_UNIT, //left-top
+                    new Vector3(clippingViewRect.xMax, clippingViewRect.yMax, 0) / UIWindow.PIXEL_PER_UNIT, //right-top
+                    new Vector3(clippingViewRect.xMax, clippingViewRect.yMin, 0) / UIWindow.PIXEL_PER_UNIT, //right-bottom
+                    new Vector3(clippingViewRect.xMin, clippingViewRect.yMin, 0) / UIWindow.PIXEL_PER_UNIT  //left-bottom
+                };
+
+                Vector2[] uvs = new Vector2[4];
+                float uLeft = textureRect.xMin / textureWidth;
+                float uRight = textureRect.xMax / textureWidth;
+                float vBottom = textureRect.yMin / textureHeight;
+                float vTop = textureRect.yMax / textureHeight;
+
+                if (!spriteFrame.rotated)
+                {
+                    if (_clippingEnabled)
+                    {
+                        float uLeftPadding = (clippingViewRect.xMin - viewRect.xMin) / textureWidth;
+                        float uRightPadding = (clippingViewRect.xMax - viewRect.xMax) / textureWidth;
+                        float vBottomPadding = (clippingViewRect.yMin - viewRect.yMin) / textureHeight;
+                        float vTopPadding = (clippingViewRect.yMax - viewRect.yMax) / textureHeight;
+
+                        uLeft += uLeftPadding;
+                        uRight += uRightPadding;
+                        vBottom += vBottomPadding;
+                        vTop += vTopPadding;
+                    }
+                    uvs [0] = new Vector2(uLeft, vTop); //top-left
+                    uvs [1] = new Vector2(uRight, vTop); //top-right
+                    uvs [2] = new Vector2(uRight, vBottom); //bottom-right
+                    uvs [3] = new Vector2(uLeft, vBottom); //bottom-left
+                } else
+                {
+                    if (_clippingEnabled)
+                    {
+                        float vTopPadding = (viewRect.xMin - clippingViewRect.xMin) / textureHeight;
+                        float vBottomPadding = (viewRect.xMax - clippingViewRect.xMax) / textureHeight;
+                        float uLeftPadding = (clippingViewRect.yMin - viewRect.yMin) / textureWidth;
+                        float uRightPadding = (clippingViewRect.yMax - viewRect.yMax) / textureWidth;
+
+                        uLeft += uLeftPadding;
+                        uRight += uRightPadding;
+                        vBottom += vBottomPadding;
+                        vTop += vTopPadding;
+                    }
+                    uvs [0] = new Vector2(uRight, vTop); //top-right
+                    uvs [1] = new Vector2(uRight, vBottom); //bottom-right
+                    uvs [2] = new Vector2(uLeft, vBottom); //bottom-left
+                    uvs [3] = new Vector2(uLeft, vTop); //top-left
+                }
+
+
+                int[] triangles = new int[]{ 0, 1, 2, 2, 3, 0 };
+
+                Vector3[] normals = new Vector3[]
+                {
+                    Vector3.back,
+                    Vector3.back,
+                    Vector3.back,
+                    Vector3.back
+                };
+
+                Mesh mesh = this.meshFilter.sharedMesh;
+                if (mesh == null)
+                {
+                    mesh = new Mesh();
+                }
+                mesh.vertices = vertices;
+                mesh.triangles = triangles;
+                mesh.normals = normals;
+                mesh.uv = uvs;
+
+                this.meshFilter.sharedMesh = mesh;
+                _meshDirty = false;
+            }
+        }
+
+        protected override Vector3 calculateRotation()
+        {
+            Vector3 rotation = base.calculateRotation();
+            if (_flipX) {
+                rotation.y += 180;
+            } 
+            if (_flipY) {
+                rotation.y += 180;
+                rotation.z += 180;
+            }
+            return rotation;
+        }
+    }
 }
+

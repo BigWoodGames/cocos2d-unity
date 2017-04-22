@@ -38,7 +38,8 @@ namespace BBGamelib{
 			base.init ();
 			initWithArray (null);
 		}
-		protected virtual void initWithArray(List<CCMenuItem> arrayOfItems){
+        protected virtual void initWithArray(List<CCMenuItem> arrayOfItems){
+            this.nameInHierarchy = "menu";
 			this.touchPriority = kCCMenuHandlerPriority;
 			this.touchMode = kCCTouchesMode.OneByOne;
 			this.isTouchEnabled = true;

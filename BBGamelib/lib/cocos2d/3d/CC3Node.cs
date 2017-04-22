@@ -21,15 +21,15 @@ namespace BBGamelib{
 		protected float _scaleZ;
 		protected float _positionZ;
 
-		protected override void init ()
-		{
-			base.init ();
-			_rotationX = 0;
-			_rotationY = 0;
-			_rotationSortingOrder = kRotationSortingOrder.YXZ;
-			_scaleZ = 1;
-			_positionZ = 0;
-		}
+        protected override void initWithGear(CCFactoryGear gear)
+        {
+            base.initWithGear(gear);
+            _rotationX = 0;
+            _rotationY = 0;
+            _rotationSortingOrder = kRotationSortingOrder.YXZ;
+            _scaleZ = 1;
+            _positionZ = 0;
+        }
 
 		public virtual float rotationX{
 			get{return _rotationX;}
@@ -159,10 +159,10 @@ namespace BBGamelib{
 						pInParentAR -= _parent.anchorPointInPixels;
 					}
 				}
-				Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
+                Vector2 uPInParentAR = ccUtils.PixelsToUnits (pInParentAR);
 				Vector3 pos = transform.localPosition;
-				pos.x = pInUIUnits.x;
-				pos.y = pInUIUnits.y;
+                pos.x = uPInParentAR.x;
+                pos.y = uPInParentAR.y;
 				pos.z = _positionZ / UIWindow.PIXEL_PER_UNIT;
 				transform.localPosition = pos;
 
@@ -171,34 +171,34 @@ namespace BBGamelib{
 				transform.localEulerAngles = Vector3.zero;
 				switch(_rotationSortingOrder){
 				case kRotationSortingOrder.XYZ:
-					transform.Rotate(_rotationX, 0, 0);
-					transform.Rotate(0, _rotationY, 0);
-					transform.Rotate(0, 0, _rotation);
+					transform.Rotate(-_rotationX, 0, 0);
+					transform.Rotate(0, -_rotationY, 0);
+					transform.Rotate(0, 0, -_rotation);
 					break;
 				case kRotationSortingOrder.XZY:
-					transform.Rotate(_rotationX, 0, 0);
-					transform.Rotate(0, 0, _rotation);
-					transform.Rotate(0, _rotationY, 0);
+					transform.Rotate(-_rotationX, 0, 0);
+					transform.Rotate(0, 0, -_rotation);
+					transform.Rotate(0, -_rotationY, 0);
 					break;
 				case kRotationSortingOrder.YXZ:
-					transform.Rotate(0, _rotationY, 0);
-					transform.Rotate(_rotationX, 0, 0);
-					transform.Rotate(0, 0, _rotation);
+					transform.Rotate(0, -_rotationY, 0);
+					transform.Rotate(-_rotationX, 0, 0);
+					transform.Rotate(0, 0, -_rotation);
 					break;
 				case kRotationSortingOrder.YZX:
-					transform.Rotate(0, _rotationY, 0);
-					transform.Rotate(0, 0, _rotation);
-					transform.Rotate(_rotationX, 0, 0);
+					transform.Rotate(0, -_rotationY, 0);
+					transform.Rotate(0, 0, -_rotation);
+					transform.Rotate(-_rotationX, 0, 0);
 					break;
 				case kRotationSortingOrder.ZXY:
-					transform.Rotate(0, 0, _rotation);
-					transform.Rotate(_rotationX, 0, 0);
-					transform.Rotate(0, _rotationY, 0);
+					transform.Rotate(0, 0, -_rotation);
+					transform.Rotate(-_rotationX, 0, 0);
+					transform.Rotate(0, -_rotationY, 0);
 					break;
 				case kRotationSortingOrder.ZYX:
-					transform.Rotate(0, 0, _rotation);
-					transform.Rotate(0, _rotationY, 0);
-					transform.Rotate(_rotationX, 0, 0);
+					transform.Rotate(0, 0, -_rotation);
+					transform.Rotate(0, -_rotationY, 0);
+					transform.Rotate(-_rotationX, 0, 0);
 					break;
 				}
 				//scale
@@ -207,24 +207,6 @@ namespace BBGamelib{
 				_isUpdateTransformDirty = false;
 			}
 		}
-
-		public virtual void setLayer(int layer){
-			this.gameObject.layer = layer;
-		}
-
-		public virtual void setLayerRecursively(int layer){
-			setLayerRecursively (this.gameObject, layer);
-		}
-
-		private void setLayerRecursively(GameObject obj, int newLayer )
-		{
-			obj.layer = newLayer;
-			for(int i=obj.transform.childCount-1; i>=0; i--){
-				Transform child = obj.transform.GetChild(i);
-				setLayerRecursively( child.gameObject, newLayer );
-			}
-		}
-
 
 		protected override void recycleGear ()
 		{

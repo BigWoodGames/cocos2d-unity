@@ -34,9 +34,13 @@ namespace BBGamelib{
 	 *
 	 * CCLabel objects are slow. Consider using CCLabelAtlas or CCLabelBMFont instead.
 	 */
-	[AddComponentMenu("")]
 	public class CCLabelTTF : CCNodeRGBA, CCLabelProtocol
 	{
+        public static Type[] kGearTypes = new Type[]
+        {
+            typeof(MeshRenderer),
+            typeof(TextMesh)
+        };
 		const float kFontSizeToPixel = 0.5f;
 		Vector2                       _dimensions;
 		CCTextAlignment              _hAlignment;
@@ -116,7 +120,7 @@ namespace BBGamelib{
 
 		public CCLabelContent content{
 			get{ return _content; }
-		}
+        }
 
 		public string text{
 			get{return _text;}
@@ -238,12 +242,15 @@ namespace BBGamelib{
 		}
 
 		protected override void recycleGear ()
-		{
+        {
+            //reset default layer
+            CCFactory.Instance.materialPropertyBlock.Clear ();
+            _content.renderer.SetPropertyBlock (CCFactory.Instance.materialPropertyBlock);
+            _content.renderer.material = _content.defaultMaterial;
+            _content.renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
+
+            CCFactory.Instance.recycleGear (CCFactory.KEY_LABEL, _content.gear);
 			base.recycleGear ();
-			_content.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
-			_content.renderer.material = _content.defaultMaterial;
-			_content.renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
-			CCFactory.Instance.recycleGear (CCFactory.KEY_LABEL, _content.gear);
 		}
 
 		// Helper

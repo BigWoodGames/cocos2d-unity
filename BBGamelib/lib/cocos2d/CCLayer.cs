@@ -4,7 +4,8 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
 
-namespace BBGamelib{
+namespace BBGamelib
+{
 	public class CCLayerBase : CCNode, CCTouchAllAtOnceDelegate, CCTouchOneByOneDelegate, CCKeyboardEventDelegate, CCMouseEventDelegate
 	{
 		public enum kCCTouchesMode{
@@ -22,7 +23,8 @@ namespace BBGamelib{
 
 		protected override void init()
 		{
-			base.init ();
+            base.init ();
+            this.nameInHierarchy = "layer";
 
 			Vector2 s = CCDirector.sharedDirector.winSize;
 			_anchorPoint = new Vector2 (0.5f, 0.5f);

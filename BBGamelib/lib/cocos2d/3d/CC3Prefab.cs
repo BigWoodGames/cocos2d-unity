@@ -21,33 +21,52 @@ namespace BBGamelib{
 		bool _reused;
 
 		public CC3Prefab(string path){
-			_path = path;
-
-			_prefabObj = CC3SpriteFactory.Instance.getPrefabObject (path, true);
-			NSUtils.Assert (_prefabObj != null, "CC3Prefab : Prefab not found at path {0}.", path);
-			_prefabObj.transform.parent = this.transform;
-			_prefabObj.transform.localPosition = Vector3.zero;
-			_prefabObj.transform.localEulerAngles = Vector3.zero;
-			_prefabObj.transform.localScale = new Vector3 (1, 1, 1);
-
-			_isBoundsDirty = true;
-			_bounds = new Bounds (Vector3.zero, Vector3.zero);
-			_reused = true;
+            initWithString(path);
 		}
 
 		public CC3Prefab(GameObject obj){
-			_path = obj.name;
-
-			_prefabObj = obj;
-			_prefabObj.transform.parent = this.transform;
-			_prefabObj.transform.localPosition = Vector3.zero;
-			_prefabObj.transform.localEulerAngles = Vector3.zero;
-			_prefabObj.transform.localScale = new Vector3 (1, 1, 1);
-
-			_isBoundsDirty = true;
-			_bounds = new Bounds (Vector3.zero, Vector3.zero);
-			_reused = true;
+            initWithPrefabObj(obj);
 		}
+
+        protected CC3Prefab(){
+        }
+
+        protected virtual void initWithString(string path){
+            _path = path;
+
+            _prefabObj = CC3SpriteFactory.Instance.getPrefabObject (path, true);
+            NSUtils.Assert (_prefabObj != null, "CC3Prefab : Prefab not found at path {0}.", path);
+            _prefabObj.transform.parent = this.transform;
+            _prefabObj.transform.localPosition = Vector3.zero;
+            _prefabObj.transform.localEulerAngles = Vector3.zero;
+            _prefabObj.transform.localScale = new Vector3 (1, 1, 1);
+            Renderer[] rs = this.renderers;
+            for (int i=0; i<rs.Length; i++) {
+                rs [i].sortingOrder = 0;
+            }
+
+            _isBoundsDirty = true;
+            _bounds = new Bounds (Vector3.zero, Vector3.zero);
+            _reused = true;
+        }
+
+        protected virtual void initWithPrefabObj(GameObject obj){
+            _path = obj.name;
+
+            _prefabObj = obj;
+            _prefabObj.transform.parent = this.transform;
+            _prefabObj.transform.localPosition = Vector3.zero;
+            _prefabObj.transform.localEulerAngles = Vector3.zero;
+            _prefabObj.transform.localScale = new Vector3 (1, 1, 1);
+            Renderer[] rs = this.renderers;
+            for (int i=0; i<rs.Length; i++) {
+                rs [i].sortingOrder = 0;
+            }
+
+            _isBoundsDirty = true;
+            _bounds = new Bounds (Vector3.zero, Vector3.zero);
+            _reused = true;
+        }
 		
 		public virtual void pause(){
 			pauseSchedulerAndActions ();
@@ -191,12 +210,6 @@ namespace BBGamelib{
 		protected override void draw ()
 		{
 			ccUtils.CC_INCREMENT_GL_DRAWS ();
-			
-			Renderer[] rs = this.renderers;
-			for (int i=0; i<rs.Length; i++) {
-				rs [i].sortingOrder = CCDirector.sharedDirector.globolRendererSortingOrder;
-			}
-			CCDirector.sharedDirector.globolRendererSortingOrder ++;
 		}
 
 		public override void visit ()

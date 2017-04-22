@@ -84,7 +84,7 @@ namespace BBGamelib{
 					UITouch uiTouch = new UITouch ();
 					uiTouch.fingerId = touch.fingerId;
 					uiTouch.phase = touch.phase;
-					Vector3 p = Input.mousePosition;
+                    Vector3 p = touch.position;
 					p.z = -Camera.main.transform.position.z;
 					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = touch.tapCount;

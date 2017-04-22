@@ -20,23 +20,5 @@ namespace BBGamelib{
 				disabledSprite = new CCSprite(disabledImage);
 			base.init (normalSprite, selectedSprite, disabledSprite, block);
 		}
-		
-		//
-		// Setter of sprite frames
-		//
-		public void setNormalSpriteFrame(CCSpriteFrame frame)
-		{
-			this.normalImage = new CCSprite (frame);
-		}
-		
-		public void setSelectedSpriteFrame(CCSpriteFrame frame)
-		{
-			this.selectedImage = new CCSprite (frame);
-		}
-		
-		public void setDisabledSpriteFrame(CCSpriteFrame frame)
-		{
-			this.disabledImage = new CCSprite (frame);
-		}
 	}
 }

@@ -145,6 +145,14 @@ namespace BBGamelib{
 			}
 			return false;
 		}
+
+        public int DL_COUNT(){
+            int count = 0;
+            for (utNode<T> ent = this.head; ent != null; ent = ent.next) {
+                count ++;
+            }
+            return count;
+        }
 	}
 }
 

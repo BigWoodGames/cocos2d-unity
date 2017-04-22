@@ -561,12 +561,6 @@ namespace BBGamelib{
 		
 		// shows the statistics
 		void OnGUI(CADisplayLink sender){
-			//in case OnGui start before set scene
-			if(_runningScene!=null){
-				_runningScene.visitOnGUI();
-			}else{
-//				CCDebug.Log("cocos2d:CCDirector:OnGUI: runningScene is null :{0}", this.GetHashCode());
-			}
 			if (_displayStats) {
 				int w = Screen.width, h = Screen.height;
 				GUIStyle style = new GUIStyle();
@@ -589,11 +583,11 @@ namespace BBGamelib{
 				Rect rect = new Rect(0, 0, w, h);
 				string text = string.Format("{0}", _lastError);
 
-				DrawQuad(new Rect(0, 0, w, h/2), new Color32(0, 0, 0, 128) ); 
+                drawQuad(new Rect(0, 0, w, h/2), new Color32(0, 0, 0, 128) ); 
 				GUI.Label(rect, text, style);	
 			}
 		}
-		void DrawQuad(Rect position, Color color) {
+		void drawQuad(Rect position, Color color) {
 			Texture2D texture = new Texture2D(1, 1);
 			texture.SetPixel(0,0,color);
 			texture.Apply();

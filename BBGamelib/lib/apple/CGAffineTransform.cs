@@ -40,7 +40,7 @@ namespace BBGamelib{
 		}
 		public static CGAffineTransform Rotate(CGAffineTransform t, float angle){
 			CGAffineTransform rotate=MakeRotation(angle);
-			return Concat(rotate,rotate);
+			return Concat(rotate,t);
 		}
 		public static CGAffineTransform Invert(CGAffineTransform xform){
 			CGAffineTransform result;

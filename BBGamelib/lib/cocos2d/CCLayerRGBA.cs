@@ -16,10 +16,8 @@ namespace BBGamelib{
 		bool		_cascadeOpacityEnabled, _cascadeColorEnabled;
 		
 		
-		protected override void init ()
-		{
-			base.init ();
-			
+        public CCLayerRGBA()
+        {
 			_displayedOpacity = _realOpacity = OpacityTransform.Default;
 			_displayedColor = _realColor = ColorTransform.Default;
 
@@ -30,7 +28,8 @@ namespace BBGamelib{
 		public bool cascadeOpacityEnabled{get{return _cascadeOpacityEnabled;} set{_cascadeOpacityEnabled=value;}}
 		public bool cascadeColorEnabled{get{return _cascadeColorEnabled;} set{_cascadeColorEnabled=value;}}
 		public bool opacityModifyRGB{get{return false;} set{}}
-		public byte opacity{
+		
+        public virtual byte opacity{
 			get{return _realOpacity.tint;}
 			
 			/** Override synthesized setOpacity to recurse items */
@@ -79,7 +78,7 @@ namespace BBGamelib{
 			}
 		}
 
-		public Color32 color{
+        public virtual Color32 color{
 			get{return _realColor.tint;}
 			set{
 				_displayedColor.tint = _realColor.tint = value;

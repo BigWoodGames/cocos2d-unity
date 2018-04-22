@@ -159,7 +159,7 @@ public class HelloWorldLayer : CCLayer {
 
 That's it! You now can code your game like using cocos2d-objc in xcode!
 
-  ![alt text](http://www.bigwoodgames.com/web/images/dev/step8.jpg "GameObject")
+  ![alt text](http://www.bigwoodgames.com/images/dev/step8.jpg "GameObject")
 .
 
 + [Framework Website](http://www.bigwoodgames.com/preview/developer.php)

@@ -8,21 +8,21 @@
 
 2. Create a new **2D project** in the Unity Editor.
 
-    >Unity 5 is required. Unity 5.1.2f1 is our recommended version.
+    >Unity 5 is required. Unity 5.4.6f3 is our recommended version.
 
-  ![alt text](http://www.bigwoodgames.com/web/images/dev/step2.jpg "New Project")
+  ![alt text](http://www.bigwoodgames.com/images/dev/step2.jpg "New Project")
 
 3. Drag the **BBGamelib** folders into your **Assets** path:
 
-  ![alt text](http://www.bigwoodgames.com/web/images/dev/step3.jpg "Add plugin")
+  ![alt text](http://www.bigwoodgames.com/images/dev/step3.jpg "Add plugin")
 
 4. Create a c# script **AppDelegate.cs** under **Assets/Scripts**.
 
-  ![alt text](http://www.bigwoodgames.com/web/images/dev/step4.jpg "Add plugin")
+  ![alt text](http://www.bigwoodgames.com/images/dev/step4.jpg "Add plugin")
 
 5. Double click AppDelegate.cs script to open MonoDevelop.
 
-  ![alt text](http://www.bigwoodgames.com/web/images/dev/step5.jpg "AppDelegate")
+  ![alt text](http://www.bigwoodgames.com/images/dev/step5.jpg "AppDelegate")
   
  Add the following code to the class:
  

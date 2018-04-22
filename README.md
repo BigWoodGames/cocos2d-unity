@@ -85,11 +85,11 @@ public class AppDelegate : CCAppDelegate {
 
 6. Create a empty **GameObject** under **Hierarchy**:
 
-  ![alt text](http://www.bigwoodgames.com/web/images/dev/step6-1.jpg "GameObject")
+  ![alt text](http://www.bigwoodgames.com/images/dev/step6-1.jpg "GameObject")
   
   **Add Component** to the **GameObject**, and choose **Scripts > App Delegate**:
   
-  ![alt text](http://www.bigwoodgames.com/web/images/dev/step6-2.jpg "GameObject")
+  ![alt text](http://www.bigwoodgames.com/images/dev/step6-2.jpg "GameObject")
  
 7. Create a c# script **HelloWorldLayer.cs** derived from **CCLayer** Add the following method to the class:
 

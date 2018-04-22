@@ -5,37 +5,37 @@ namespace BBGamelib{
 	public class FloatUtils
 	{
 		public static float Epsilon =  0.000000001f;
-		public static bool ES(float a, float b){
+        public static bool ES(double a, double b){
 			bool equal = EQ (a, b);
 			if (equal)
 				return true;
 			else
 				return a < b;
 		}
-		public static bool EB(float a, float b){
+        public static bool EB(double a, double b){
 			bool equal = EQ (a, b);
 			if (equal)
 				return true;
 			else
 				return a > b;
 		}
-		public static bool EQ(float a, float b){
-			bool equal = Mathf.Abs (b - a) < Epsilon;
+        public static bool EQ(double a, double b){
+			bool equal = System.Math.Abs (b - a) < Epsilon;
 			return equal;
 		}
 
-		public static bool NEQ(float a, float b){
+        public static bool NEQ(double a, double b){
 			return !EQ(a, b);
 		}
 		
-		public static bool Big(float a, float b){
+        public static bool Big(double a, double b){
 			bool equal = EQ (a, b);
 			if (equal)
 				return false;
 			else
 				return a > b;
 		}
-		public static bool Small(float a, float b){
+        public static bool Small(double a, double b){
 			bool equal = EQ (a, b);
 			if (equal)
 				return false;

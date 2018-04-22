@@ -23,7 +23,7 @@ namespace BBGamelib{
 		#region singleton
 		[SerializeField] [HideInInspector]private bool firstPassFlag=true;
 		static NSAppDelegate _appDelegate = null;
-		public static NSAppDelegate appDelegate{
+		public static NSAppDelegate AppDelegate{
 			get{
 				return _appDelegate;
 			}
@@ -71,7 +71,9 @@ namespace BBGamelib{
 				_doseApplicationDidFinishLaunched = true;
 			}
 		}
-		public virtual void Update(){
+
+        //3d-support: Update->LastUpdate for unity animation events
+		public virtual void LateUpdate(){
 			if (Application.isPlaying && _doseApplicationDidFinishLaunched && _loopers != null) {
 				for(int i=0; i < _looperCount; i++)
 					_loopers[i].selOnUpdate.Invoke (this);

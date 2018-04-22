@@ -38,10 +38,13 @@ namespace BBGamelib{
 			base.init ();
 			initWithArray (null);
 		}
-		protected virtual void initWithArray(List<CCMenuItem> arrayOfItems){
+        protected virtual void initWithArray(List<CCMenuItem> arrayOfItems){
+            this.nameInHierarchy = "menu";
 			this.touchPriority = kCCMenuHandlerPriority;
 			this.touchMode = kCCTouchesMode.OneByOne;
 			this.isTouchEnabled = true;
+            this.isMouseEnabled = true;
+            this.mousePriority = this.touchPriority;
 			_enabled = true;
 			
 			// by default, menu in the center of the screen
@@ -101,9 +104,8 @@ namespace BBGamelib{
 		#endregion
 
 		#region mark Menu - Events Touches
-		CCMenuItem  itemForTouch(UITouch  touch)
+        CCMenuItem  itemForTouch(Vector2  touchLocation)
 		{
-			Vector2 touchLocation = touch.location;
 //			touchLocation = CCDirector.sharedDirector.convertToGL(touchLocation);
 
 			var enumerator = _children.GetEnumerator();
@@ -122,54 +124,103 @@ namespace BBGamelib{
 			return null;
 		}
 
+        private bool touchBegan(CCMenuItem touchedItem)
+        {
+            if( _state != kCCMenuState.Waiting || !_visible || ! _enabled)
+                return false;
+
+            for( CCNode c = this.parent; c != null; c = c.parent )
+                if( c.visible == false )
+                    return false;
+
+            _selectedItem = touchedItem;
+
+            if( _selectedItem!=null ) {
+                _selectedItem.selected();
+                _state = kCCMenuState.TrackingTouch;
+                return true;
+            }
+            return false;
+        }
+
+        private void touchEnded()
+        {
+//            NSUtils.Assert(_state == kCCMenuState.TrackingTouch, "[Menu ccTouchEnded] -- invalid state");
+            if (_state != kCCMenuState.TrackingTouch)
+                return;
+            _selectedItem.unselected();
+            _selectedItem.activate();
+            _state = kCCMenuState.Waiting;
+        }
+
+        private void touchCancelled()
+        {
+//            NSUtils.Assert(_state == kCCMenuState.TrackingTouch, "[Menu ccTouchCancelled] -- invalid state");
+            if (_state != kCCMenuState.TrackingTouch)
+                return;
+            _selectedItem.unselected();
+            _state = kCCMenuState.Waiting;
+        }
+
+        private void touchMoved(CCMenuItem touchedItem)
+        {
+//            NSUtils.Assert(_state == kCCMenuState.TrackingTouch, "[Menu ccTouchMoved] -- invalid state");
+            if (_state != kCCMenuState.TrackingTouch)
+                return;
+
+            if (touchedItem != _selectedItem) {
+                _selectedItem.unselected();
+                _selectedItem = touchedItem;
+                _selectedItem.selected();
+            }
+        }
+
 		public override bool ccTouchBegan (UITouch touch)
-		{
-			if( _state != kCCMenuState.Waiting || !_visible || ! _enabled)
-				return false;
-			
-			for( CCNode c = this.parent; c != null; c = c.parent )
-				if( c.visible == false )
-					return false;
-			
-			_selectedItem = itemForTouch(touch);
-			
-			if( _selectedItem!=null ) {
-				_selectedItem.selected();
-				_state = kCCMenuState.TrackingTouch;
-				return true;
-			}
-			return false;
+        {
+            Vector2 touchLocation = touch.location;
+            CCMenuItem touchedItem = itemForTouch(touchLocation);
+            return touchBegan(touchedItem);
 		}
 
 		public override void ccTouchEnded (UITouch touch)
 		{
-			NSUtils.Assert(_state == kCCMenuState.TrackingTouch, "[Menu ccTouchEnded] -- invalid state");
-			_selectedItem.unselected();
-			_selectedItem.activate();
-			
-			_state = kCCMenuState.Waiting;
+            touchEnded();
 		}
 
 		public override void ccTouchCancelled (UITouch touch)
 		{
-			NSUtils.Assert(_state == kCCMenuState.TrackingTouch, "[Menu ccTouchCancelled] -- invalid state");
-			
-			_selectedItem.unselected();
-			
-			_state = kCCMenuState.Waiting;
+            touchCancelled();
 		}
-		public override void ccTouchMoved (UITouch touch)
-		{
-			NSUtils.Assert(_state == kCCMenuState.TrackingTouch, "[Menu ccTouchMoved] -- invalid state");
+		
+        public override void ccTouchMoved (UITouch touch)
+        {
+            Vector2 touchLocation = touch.location;
+            CCMenuItem touchedItem = itemForTouch(touchLocation);
+            touchMoved(touchedItem);
 			
-			CCMenuItem currentItem = itemForTouch(touch);
-			
-			if (currentItem != _selectedItem) {
-				_selectedItem.unselected();
-				_selectedItem = currentItem;
-				_selectedItem.selected();
-			}
 		}
+
+        public override bool ccMouseDown(NSEvent theEvent)
+        {
+            Vector2 touchLocation = theEvent.mouseLocation;
+            CCMenuItem touchedItem = itemForTouch(touchLocation);
+            return touchBegan(touchedItem);
+        }
+
+        public override bool ccMouseUp(NSEvent theEvent)
+        {
+            touchEnded();
+            return false;
+        }
+
+        public override bool ccMouseDragged(NSEvent theEvent)
+        {
+            Vector2 touchLocation = theEvent.mouseLocation;
+            CCMenuItem touchedItem = itemForTouch(touchLocation);
+            touchMoved(touchedItem);
+            return false;
+        }
+
 		#endregion
 
 		

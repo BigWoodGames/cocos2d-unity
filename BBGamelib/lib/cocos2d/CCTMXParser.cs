@@ -335,12 +335,12 @@ namespace BBGamelib{
 		}
 
 		static void ParseImagePlist(int firstGid, int tileWidth, int tileHeight, string filename, Dictionary<int, string> gidToFiles, NSDictionary tilesetCaches){
-			string path = filename + "-tp.txt";
+			string path = filename + ".txt";
 			NSDictionary plist = null;
 			if(tilesetCaches!=null)
 				plist = tilesetCaches.objectForKey<NSDictionary>(path);
 			if(plist==null)
-				plist = NSDictionary.DictionaryWithContentsOfFileFromResources(filename + "-tp.txt");
+				plist = NSDictionary.DictionaryWithContentsOfFileFromResources(filename + ".txt");
 			NSDictionary metaDataDict = plist.objectForKey<NSDictionary>("metadata");
 			NSDictionary framesDict = plist.objectForKey<NSDictionary>("frames");
 			int format = 0;

@@ -12,8 +12,8 @@ namespace BBGamelib{
 	 */
 	public class CCNodeRGBA : CCNode, CCRGBAProtocol
 	{
-		protected byte		_displayedOpacity, _realOpacity;
-		protected Color32		_displayedColor, _realColor;
+		protected OpacityTransform	_displayedOpacity, _realOpacity;
+		protected ColorTransform	_displayedColor, _realColor;
 		protected bool		_cascadeColorEnabled, _cascadeOpacityEnabled;
 		
 		public bool cascadeColorEnabled{ get{return _cascadeColorEnabled;} set{_cascadeColorEnabled=value;}}
@@ -21,32 +21,49 @@ namespace BBGamelib{
 
 		public CCNodeRGBA ()
 		{
-			_displayedOpacity = _realOpacity = 255;
-			_displayedColor = _realColor = Color.white;
+			_displayedOpacity = _realOpacity = OpacityTransform.Default;
+			_displayedColor = _realColor = ColorTransform.Default;
+
 			_cascadeOpacityEnabled = false;
 			_cascadeColorEnabled = false;
 		}
 
 		// XXX To make BridgeSupport happy
 		public virtual byte opacity{ 
-			get{return _realOpacity;}
+			get{return _realOpacity.tint;}
 			set{
-				_displayedOpacity = _realOpacity = value;
+				_displayedOpacity.tint = _realOpacity.tint = value;
 				if( _cascadeOpacityEnabled && _parent!=null) {
-					byte parentOpacity = 255;
+					OpacityTransform parentOpacity = OpacityTransform.Default;
 					if( _parent is CCNodeRGBA && ((CCRGBAProtocol)_parent).cascadeOpacityEnabled)
 						parentOpacity = ((CCRGBAProtocol)_parent).displayedOpacity;
 					updateDisplayedOpacity(parentOpacity);
 				}
 			}
 		}
-		public virtual byte displayedOpacity{
+
+		public virtual OpacityTransform opacityTransform
+		{
+			get{ return _realOpacity;}
+			set{
+				_displayedOpacity = _realOpacity = value;
+				if( _cascadeOpacityEnabled && _parent!=null) {
+					OpacityTransform parentOpacity = OpacityTransform.Default;
+					if( _parent is CCNodeRGBA && ((CCRGBAProtocol)_parent).cascadeOpacityEnabled)
+						parentOpacity = ((CCRGBAProtocol)_parent).displayedOpacity;
+					updateDisplayedOpacity(parentOpacity);
+				}
+			}
+		}
+		public virtual OpacityTransform displayedOpacity{
 			get{return _displayedOpacity;}
 		}
-		public virtual void updateDisplayedOpacity(byte parentOpacity)
+
+		public virtual void updateDisplayedOpacity(OpacityTransform parentOpacity)
 		{
-			_displayedOpacity = (byte)(_realOpacity * parentOpacity/255.0f);
-			
+			_displayedOpacity.tint = (byte)(_realOpacity.tint * parentOpacity.tint/255.0f);
+			_displayedOpacity.add = (byte)(_realOpacity.add * parentOpacity.tint + parentOpacity.add);
+
 			if (_cascadeOpacityEnabled && _children!=null) {
 				var enumerator = _children.GetEnumerator();
 				while (enumerator.MoveNext()) {
@@ -57,29 +74,54 @@ namespace BBGamelib{
 				}
 			}
 		}
+
 		public virtual Color32 color{
-			get{ return _realColor;}
+			get{ return _realColor.tint;}
 			set{
-				_displayedColor = _realColor = value;
+				_displayedColor.tint = _realColor.tint = value;
 				if(_cascadeColorEnabled && _parent!=null){
-					Color parentColor = Color.white;
+					ColorTransform parentColor = ColorTransform.Default;
 					if( _parent is CCRGBAProtocol && ((CCRGBAProtocol)_parent).cascadeColorEnabled)
 						parentColor = ((CCRGBAProtocol)_parent).displayedColor;
 					updateDisplayedColor(parentColor);
 				}
 			}
 		}
-		public virtual Color32 displayedColor{
+		
+		public virtual ColorTransform colorTransform{
+			get{ return _realColor;}
+			set{
+				_displayedColor = _realColor = value;
+				if(_cascadeColorEnabled && _parent!=null){
+					ColorTransform parentColor = ColorTransform.Default;
+					if( _parent is CCRGBAProtocol && ((CCRGBAProtocol)_parent).cascadeColorEnabled)
+						parentColor = ((CCRGBAProtocol)_parent).displayedColor;
+					updateDisplayedColor(parentColor);
+				}
+			}
+		}
+
+		public virtual ColorTransform displayedColor{
 			get{return _displayedColor;}
 		}
 
 		
-		public virtual void updateDisplayedColor(Color32 parentColor)
+		public virtual void updateDisplayedColor (ColorTransform parentColor)
 		{
-			_displayedColor.r = (byte)(_realColor.r * parentColor.r/255.0f);
-			_displayedColor.g = (byte)(_realColor.g * parentColor.g/255.0f);
-			_displayedColor.b = (byte)(_realColor.b * parentColor.b/255.0f);
+			Color32 displayedTint = _displayedColor.tint;
+			Color32 displayedAdd = _displayedColor.add;
+
+			displayedTint.r = (byte)(_realColor.tint.r * parentColor.tint.r/255.0f);
+			displayedTint.g = (byte)(_realColor.tint.g * parentColor.tint.g/255.0f);
+			displayedTint.b = (byte)(_realColor.tint.b * parentColor.tint.b/255.0f);
 			
+			displayedAdd.r = (byte)(_realColor.add.r * parentColor.tint.r + parentColor.add.r);
+			displayedAdd.g = (byte)(_realColor.add.g * parentColor.tint.g + parentColor.add.g);
+			displayedAdd.b = (byte)(_realColor.add.b * parentColor.tint.b + parentColor.add.b);
+
+			_displayedColor.tint = displayedTint;
+			_displayedColor.add = displayedAdd;
+
 			if (_cascadeColorEnabled && _children != null) {
 				var enumerator = _children.GetEnumerator();
 				while (enumerator.MoveNext()) {
@@ -90,13 +132,12 @@ namespace BBGamelib{
 				}
 			}
 		}
+
 		public virtual bool opacityModifyRGB{
 			get{
-//				CCDebug.Info("{0}:opacityModifyRGB not implemented", GetType().Name);
 				return false;
 			}
 			set{
-//				CCDebug.Info("{0}:opacityModifyRGB not implemented", GetType().Name);
 			}
 		}
 

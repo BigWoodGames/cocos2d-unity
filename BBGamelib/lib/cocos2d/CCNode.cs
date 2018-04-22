@@ -5,7 +5,8 @@ using System.Linq;
 using System;
 using BBGamelib.scheduler;
 
-namespace BBGamelib{
+namespace BBGamelib
+{
 	public class CCNode
 	{
 		static uint globalOrderOfArrival = 1;
@@ -91,17 +92,21 @@ namespace BBGamelib{
 		
 		protected bool _isReorderChildDirty;
 
-		#region CCNode - Init & cleanup
-		public CCNode(){
+        // ------------------------------------------------------------------------------
+        //  CCNode Init & cleanup
+        // ------------------------------------------------------------------------------
+		public CCNode()
+        {
 			init ();
 		}
-		protected virtual void init(){
-			CCFactoryGear gear = CCFactory.Instance.takeGear (CCFactory.KEY_NODE);
-			initWithGear (gear);
-		}
+		protected virtual void init()
+        {
+            CCFactoryGear gear = CCFactory.Instance.takeGear (CCFactory.KEY_NODE);
+            initWithGear (gear);
+        }
 		protected virtual void initWithGear(CCFactoryGear gear){
 			_gear = gear;
-			_gear.gameObject.name = "Node";
+			_gear.gameObject.name = "node";
 			_gear.gameObject.transform.localPosition = Vector3.zero;
 //			_gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			_isRunning = false;
@@ -158,18 +163,16 @@ namespace BBGamelib{
 			// actions
 			stopAllActions ();
 			unscheduleAllSelectors ();
-			
-			// timers
-			if (_children != null) {
 
+			if (_children != null) {
 				var enumerator = _children.GetEnumerator();
 				while (enumerator.MoveNext()) {
 					CCNode child = enumerator.Current;
 					child.cleanup ();
 				}
-				_parent = null;
 				_children.Clear ();
 			}
+			this.parent = null;
 			recycleGear ();
 		}
 
@@ -185,12 +188,10 @@ namespace BBGamelib{
 		{
 			return string.Format ("<{0} = {1} | Tag = {2}>", this.GetType().Name, this.GetHashCode(), this.userTag);
 		}
-		~CCNode(){
-//			CCDebug.Info( "cocos2d: deallocing {0}", this.ToString());
-		}
-		#endregion
-		
-		#region Setters
+
+        // ------------------------------------------------------------------------------
+        //  CCNode Setters
+        // ------------------------------------------------------------------------------
 		public GameObject gameObject{
 			get{ return _gear.gameObject;}
 		}
@@ -235,6 +236,15 @@ namespace BBGamelib{
 				if(FloatUtils.NEQ(_scaleX, value)){
 					_scaleX = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
+
+					//reset child position if ignoreAnchorPointForPosition
+					if(_ignoreAnchorPointForPosition){
+						var enumerator = _children.GetEnumerator();
+						while (enumerator.MoveNext()) {
+							CCNode node = enumerator.Current;
+							node._isUpdateTransformDirty = true;
+						}
+					}
 				}
 			}
 		}
@@ -248,6 +258,15 @@ namespace BBGamelib{
 				if(FloatUtils.NEQ(_scaleY, value)){
 					_scaleY = value;
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
+
+					//reset child position if ignoreAnchorPointForPosition
+					if(_ignoreAnchorPointForPosition){
+						var enumerator = _children.GetEnumerator();
+						while (enumerator.MoveNext()) {
+							CCNode node = enumerator.Current;
+							node._isUpdateTransformDirty = true;
+						}
+					}
 				}
 			}
 		}
@@ -314,13 +333,15 @@ namespace BBGamelib{
 				
 					//Change children position when update anchorpoint 
 					//It's a performance issue if open this, use forceTransformDirty to update child when reset anchorpoint
-//					if(_contentSize != Vector2.zero && _children != null){
-//						foreach(CCNode child in _children){
-//							child._isUpdateTransformDirty = tråue;
-//							child._isTransformDirty = true;
-//							child._isInverseDirty = true;
-//						}
-//					}			
+					if(_contentSize != Vector2.zero && _children != null){
+                        var childrenEnu = _children.GetEnumerator();
+                        while(childrenEnu.MoveNext()){
+                            var child = childrenEnu.Current;
+							child._isUpdateTransformDirty = true;
+							child._isTransformDirty = true;
+							child._isInverseDirty = true;
+						}
+					}			
 				}
 			}
 		}
@@ -338,6 +359,18 @@ namespace BBGamelib{
 					_contentSize = value;	
 					_anchorPointInPixels = new Vector2( _contentSize.x * _anchorPoint.x, _contentSize.y * _anchorPoint.y );
 					_isUpdateTransformDirty = _isTransformDirty = _isInverseDirty = true;
+
+                    //Change children position when update anchorpoint 
+                    //It's a performance issue if open this, use forceTransformDirty to update child when reset anchorpoint
+                    if(_contentSize != Vector2.zero && _children != null){
+                        var childrenEnu = _children.GetEnumerator();
+                        while(childrenEnu.MoveNext()){
+                            var child = childrenEnu.Current;
+                            child._isUpdateTransformDirty = true;
+                            child._isTransformDirty = true;
+                            child._isInverseDirty = true;
+                        }
+                    }  
 				}
 			}
 		}
@@ -416,7 +449,7 @@ namespace BBGamelib{
 			set{
 				_parent = value;
 				if(value!=null)
-					gameObject.transform.parent = value.transform;
+					gameObject.transform.SetParent(value.transform, false);
 				else
 					gameObject.transform.parent = null;
 			}
@@ -430,9 +463,9 @@ namespace BBGamelib{
 			set{ _orderOfArrival = value;}
 		}
 
-		#endregion
-
-		#region CCNode Composition
+        // ------------------------------------------------------------------------------
+        //  CCNode Composition
+        // ------------------------------------------------------------------------------
 		public CCNode getChildByTag(string tag)
 		{
 			NSUtils.Assert(tag!=null, "tag is null.");
@@ -520,7 +553,8 @@ namespace BBGamelib{
 					}
 					if (cleanup)
 						c.cleanup ();
-					c.parent = null;
+					else
+						c.parent = null;
 				}
 				_children.Clear ();
 			}
@@ -595,10 +629,10 @@ namespace BBGamelib{
 				_isReorderChildDirty = false;
 			}
 		}
-		#endregion
 
-
-		#region CCNode Draw
+        // ------------------------------------------------------------------------------
+        //  CCNode Draw
+        // ------------------------------------------------------------------------------
 		protected virtual void draw(){
 		}
 		public virtual void visit(){
@@ -635,38 +669,10 @@ namespace BBGamelib{
 			// reset for next frame
 			_orderOfArrival = 0;
 		}
-		public virtual void visitOnGUI(){
-			if(_children!=null){
-				int count = _children.Count;
-				int i = 0;
-				for( ; i < count; i++ ) {
-					CCNode child =  _children[i];
-					child.visitOnGUI();
-				}
-				
-				drawOnGUI();
-				
-				// draw children zOrder >= 0
-				for( ; i < count; i++ ) {
-					CCNode child =  _children[i];
-					child.visitOnGUI();
-				}
-			}else
-				drawOnGUI();
-		}
-		protected virtual void drawOnGUI(){
-//			Rect bounds = boundingBox;
-//			bounds.position = Vector2.zero;
-//			CGAffineTransform worldTransform = nodeToWorldTransform();
-//			bounds = CGAffineTransform.CGRectApplyAffineTransform(bounds, worldTransform);
-//			bounds.position = ccUtils.PixelsToUnits(bounds.position);
-//			bounds.size = ccUtils.PixelsToUnits(bounds.size);
-//			ccUtils.GUIDrawRect(bounds, Color.blue);
-		}
 
-		#endregion
-
-		#region CCNode - Transformations
+        // ------------------------------------------------------------------------------
+        //  CCNode Transformations
+        // ------------------------------------------------------------------------------
 		protected virtual void transformAncestors()
 		{
 			if( _parent !=null) {
@@ -678,84 +684,69 @@ namespace BBGamelib{
 		public virtual void updateTransform(){
 			if (_isUpdateTransformDirty) {
 				//position
-
-//				CGAffineTransform tmpAffine = nodeToParentTransform();
-//				Vector2 pInParent = CGAffineTransform.CGPointApplyAffineTransform(_anchorPointInPixels, tmpAffine);
-//				Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParent);
-//				transform.localPosition = new Vector3 (pInUIUnits.x, pInUIUnits.y, transform.localPosition.z);
-
-//				if(_parent!=null && _parent.ignoreAnchorPointForPosition){
-//					CGAffineTransform tmpAffine = _parent.nodeToWorldTransform ();
-//					Vector2 pInWorld = CGAffineTransform.CGPointApplyAffineTransform (_position, tmpAffine);
-//					Vector2 pInUI = CCDirector.sharedDirector.convertToUI (pInWorld);
-//					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInUI);
-//
-//					transform.position = new Vector3 (pInUIUnits.x, pInUIUnits.y, 0);
-//
-//					Vector3 localPos = transform.localPosition;
-//					localPos.z = -_positionZ / UIWindow.PIXEL_PER_UNIT;
-//					transform.localPosition = localPos;
-//				}else{
-//					Vector2 pInParentAR = _position;
-//					if(_parent==null)
-//						pInParentAR = CCDirector.sharedDirector.convertToUI(pInParentAR);
-//					else
-//						pInParentAR -= _parent._anchorPointInPixels;
-//					Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
-//					Vector3 pos = transform.localPosition;
-//					pos.x = pInUIUnits.x;
-//					pos.y = pInUIUnits.y;
-//					pos.z = -_positionZ / UIWindow.PIXEL_PER_UNIT;
-//					transform.localPosition = pos;
-//				}
-
 				Vector2 pInParentAR = _position;
-				if(_parent!=null && !_parent.ignoreAnchorPointForPosition){
-					pInParentAR -= _parent._anchorPointInPixels;
-				}
-				Vector2 pInUIUnits = ccUtils.PixelsToUnits (pInParentAR);
+				if(_parent!=null){
+					if(_parent.ignoreAnchorPointForPosition){
+						if(FloatUtils.NEQ(_parent.scaleX, 0) && FloatUtils.NEQ(_parent.scaleY, 0)){
+							pInParentAR += new Vector2(_parent.anchorPointInPixels.x * (1/_parent.scaleX - 1), _parent.anchorPointInPixels.y * (1/_parent.scaleY - 1)); 
+						}
+					}else{
+						pInParentAR -= _parent.anchorPointInPixels;
+                    }
+                }
+                Vector2 uPInParentAR = ccUtils.PixelsToUnits (pInParentAR);
 				Vector3 pos = transform.localPosition;
-				pos.x = pInUIUnits.x;
-				pos.y = pInUIUnits.y;
+                pos.x = uPInParentAR.x;
+                pos.y = uPInParentAR.y;
 				pos.z = 0;
 				transform.localPosition = pos;
 
 				
 				//rotation
-				Vector3 rotation = transform.localEulerAngles;
-				rotation.x = 0;
-				rotation.z = -_rotation;
-				rotation.y = 0;
-				bool negativeScaleX = FloatUtils.Small(_scaleX, 0);
-				bool negativeScaleY = FloatUtils.Small(_scaleY, 0);
-				if(negativeScaleX && negativeScaleY){
-					rotation.z = 180 - _rotation;
-				}else if(negativeScaleX){
-					rotation.y = 180;
-					rotation.z = _rotation;
-				}else if(negativeScaleY){
-					rotation.y = 180;
-					rotation.z = _rotation + 180;
-				}
-
-				transform.localEulerAngles = rotation;
+                Vector3 rotation = calculateRotation();
+                transform.localEulerAngles = Vector3.zero;
+                transform.Rotate(rotation.x, 0, 0);
+                transform.Rotate(0, rotation.y, 0);
+                transform.Rotate(0, 0, rotation.z);
 				
 				//scale			
 				transform.localScale = new Vector3 (Mathf.Abs (_scaleX), Mathf.Abs (_scaleY), transform.localScale.z);
-
 				_isUpdateTransformDirty = false;
 			}
 		}
-		#endregion
+        protected virtual Vector3 calculateRotation(){
+            Vector3 rotation = transform.localEulerAngles;
+            rotation.x = 0;
+            rotation.z = -_rotation;
+            rotation.y = 0;
+            bool negativeScaleX = FloatUtils.Small(_scaleX, 0);
+            bool negativeScaleY = FloatUtils.Small(_scaleY, 0);
+            if (negativeScaleX && negativeScaleY)
+            {
+                rotation.z = 180 - _rotation;
+            } else if (negativeScaleX)
+            {
+                rotation.y = 180;
+                rotation.z = _rotation;
+            } else if (negativeScaleY)
+            {
+                rotation.y = 180;
+                rotation.z = _rotation + 180;
+            }
+            return rotation;
+        }
 
 
-		#region CCNode SceneManagement
+        // ------------------------------------------------------------------------------
+        //  CCNode SceneManagement
+        // ------------------------------------------------------------------------------
 		//
 		//onEnter & onExit
 		//
 		public virtual void onEnter(){
 			if (_children != null) {
-				for(int i=_children.Count -1; i>=0; i--){
+				int childrenCount = _children.Count;
+				for(int i=0; i<childrenCount; i++){
 					CCNode child = _children[i];
 					child.onEnter();
 				}
@@ -766,7 +757,8 @@ namespace BBGamelib{
 		}
 		public virtual void onEnterTransitionDidFinish(){
 			if (_children != null) {
-				for(int i=_children.Count -1; i>=0; i--){
+				int childrenCount = _children.Count;
+				for(int i=0; i<childrenCount; i++){
 					CCNode child = _children[i];
 					child.onEnterTransitionDidFinish ();
 				}
@@ -774,7 +766,8 @@ namespace BBGamelib{
 		}
 		public virtual void onExitTransitionDidStart(){
 			if (_children != null) {
-				for(int i=_children.Count -1; i>=0; i--){
+				int childrenCount = _children.Count;
+				for(int i=0; i<childrenCount; i++){
 					CCNode child = _children[i];
 					child.onExitTransitionDidStart ();
 				}
@@ -785,17 +778,17 @@ namespace BBGamelib{
 			_isRunning = false;
 			
 			if (_children != null) {
-				for(int i=_children.Count -1; i>=0; i--){
+				int childrenCount = _children.Count;
+				for(int i=0; i<childrenCount; i++){
 					CCNode child = _children[i];
 					child.onExit ();
 				}
 			}
 		}
-		#endregion
 
-		#region CCNode Actions
-
-
+        // ------------------------------------------------------------------------------
+        //  CCNode Actions
+        // ------------------------------------------------------------------------------
 		/** CCActionManager used by all the actions.
 		 IMPORTANT: If you set a new CCActionManager, then previously created actions are going to be removed.
 		 @since v2.0
@@ -853,10 +846,10 @@ namespace BBGamelib{
 		public uint numberOfRuningActions(){
 			return _actionManager.numberOfRunningActionsInTarget (this);		
 		}
-		#endregion
 
-		#region CCNode - Scheduler
-		
+        // ------------------------------------------------------------------------------
+        //  Scheduler
+        // ------------------------------------------------------------------------------
 		/** CCScheduler used to schedule all "updates" and timers.
 		 IMPORTANT: If you set a new CCScheduler, then previously created timers/update are going to be removed.
 		 @since v2.0
@@ -919,7 +912,7 @@ namespace BBGamelib{
 		public void unscheduleAllSelectors(){
 			_scheduler.unscheduleAllForTarget (this);
 		}
-		public void  resumeSchedulerAndActions(){
+		public void resumeSchedulerAndActions(){
 			_scheduler.resumeTarget (this);
 			_actionManager.resumeTarget (this);
 		}
@@ -931,15 +924,16 @@ namespace BBGamelib{
 		/* override me*/
 		public virtual void update(float dt){
 		}
-		#endregion
 
-	
-		#region  CCNode Transform
+
+        // ------------------------------------------------------------------------------
+        //  #region  CCNode Transform
+        // ------------------------------------------------------------------------------
 		/** Returns the matrix that transform the node's (local) space coordinates into the parent's space coordinates.
 		 The matrix is in Pixels.
 		 @since v0.7.1
 		 */
-		public CGAffineTransform nodeToParentTransform()
+		public virtual CGAffineTransform nodeToParentTransform()
 		{
 			if ( _isTransformDirty ) {
 				
@@ -1036,74 +1030,70 @@ namespace BBGamelib{
 		public virtual Vector2 convertToWindowSpace(Vector2 nodePoint)
 		{
 			Vector2 worldPoint = convertToWorldSpace(nodePoint);
-//			return CCDirector.sharedDirector.convertToUI (worldPoint);
 			return worldPoint;
 		}
 
 		public virtual Vector2 convertTouchToNodeSpace(UITouch touch)
 		{
 			Vector2 point = touch.location;
-//			point = CCDirector.sharedDirector.convertToGL (point);
-//			return convertToNodeSpace(point);
-			return point;
+			return convertToNodeSpace(point);
 		}
 		
 		public virtual Vector2 convertTouchToNodeSpaceAR(UITouch touch)
 		{
 			Vector2 point = touch.location;
-//			point = CCDirector.sharedDirector.convertToGL (point);
 			return convertToNodeSpaceAR(point);
 		}
-
 		
-		public virtual Bounds convertToNodeSpace(Bounds bounds){
-			transformAncestors ();
-			var min = bounds.min;
-			var max = bounds.max;
-			var transform = this.transform;
-			var center = transform.InverseTransformPoint(bounds.center);
-			var point1 = transform.InverseTransformPoint(new Vector3(min.x, min.y, min.z));
-			var point2 = transform.InverseTransformPoint(new Vector3(min.x, min.y, max.z));
-			var point3 = transform.InverseTransformPoint(new Vector3(min.x, max.y, min.z));
-			var point4 = transform.InverseTransformPoint(new Vector3(min.x, max.y, max.z));
-			var point5 = transform.InverseTransformPoint(new Vector3(max.x, min.y, min.z));
-			var point6 = transform.InverseTransformPoint(new Vector3(max.x, min.y, max.z));
-			var point7 = transform.InverseTransformPoint(new Vector3(max.x, max.y, min.z));
-			var point8 = transform.InverseTransformPoint(new Vector3(max.x, max.y, max.z));
-			var result = new Bounds(center, Vector3.zero);
-			result.Encapsulate(point1);
-			result.Encapsulate(point2);
-			result.Encapsulate(point3);
-			result.Encapsulate(point4);
-			result.Encapsulate(point5);
-			result.Encapsulate(point6);
-			result.Encapsulate(point7);
-			result.Encapsulate(point8);
-			return result;
-		}
-		
-		#if UNITY_STANDALONE || UNITY_WEBGL
 		public Vector2 convertMouseEventToNodeSpace(NSEvent evt)
 		{
-			Vector2 point = CCDirectorMac.sharedDirector.convertEventToGL (evt);
+			Vector2 point = evt.mouseLocation;
 			return convertToNodeSpace(point);
 		}
-		
+
 		public Vector2 convertMouseEventToNodeSpaceAR(NSEvent evt)
 		{
-			Vector2 point = CCDirectorMac.sharedDirector.convertEventToGL (evt);
+			Vector2 point = evt.mouseLocation;
 			return convertToNodeSpaceAR(point);
 		}
-		#endif
 
-		#endregion
 
-		#region edtior features
+        // ------------------------------------------------------------------------------
+        //  unity
+        // ------------------------------------------------------------------------------
 		public string nameInHierarchy{
 			get{return _gear.gameObject.name;}
 			set{_gear.gameObject.name=value;}
 		}
-		#endregion
+
+        //set unity layer
+        public virtual void setUnityLayer(int layer){
+            this.gameObject.layer = layer;
+        }
+
+        //set unity layer recursively
+        public virtual void setUnityLayerRecursively(int layer){
+            setUnityLayerRecursively (this.gameObject, layer);
+        }
+
+        //set unity layer
+        public virtual void setUnityLayer(string layer){
+            this.gameObject.layer = LayerMask.NameToLayer(layer);
+        }
+
+        //set unity layer recursively
+        public virtual void setUnityLayerRecursively(string layer){
+            setUnityLayerRecursively (this.gameObject, LayerMask.NameToLayer(layer));
+        }
+
+        private void setUnityLayerRecursively(GameObject obj, int newLayer )
+        {
+            obj.layer = newLayer;
+            for(int i=obj.transform.childCount-1; i>=0; i--){
+                Transform child = obj.transform.GetChild(i);
+                setUnityLayerRecursively( child.gameObject, newLayer );
+            }
+        }
 	}
 }
 

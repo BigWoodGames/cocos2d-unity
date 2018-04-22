@@ -36,10 +36,10 @@ namespace BBGamelib{
 		utList<tListEntry> updatesNeg;
 		utList<tListEntry> updates0;
 		utList<tListEntry> updatesPos;
-		UTHash<int, tHashUpdateEntry> hashForUpdates;
+		utHash<int, tHashUpdateEntry> hashForUpdates;
 		
 		// Used for "selectors with interval"
-		UTHash<int, tHashTimerEntry> hashForTimers;
+		utHash<int, tHashTimerEntry> hashForTimers;
 		tHashTimerEntry currentTarget;
 		bool currentTargetSalvaged;
 
@@ -63,12 +63,12 @@ namespace BBGamelib{
 			updates0 = new utList<tListEntry>();
 			updatesNeg = new utList<tListEntry>();
 			updatesPos = new utList<tListEntry>();
-			hashForUpdates = new UTHash<int, tHashUpdateEntry>();
+			hashForUpdates = new utHash<int, tHashUpdateEntry>();
 			
 			// selectors with interval
 			currentTarget = null;
 			currentTargetSalvaged = false;
-			hashForTimers =  new UTHash<int, tHashTimerEntry>();
+			hashForTimers =  new utHash<int, tHashTimerEntry>();
 			updateHashLocked = false;
 			_paused = false;
 
@@ -115,8 +115,8 @@ namespace BBGamelib{
 
 		void removeHashElement(tHashTimerEntry element){
 			hashForTimers.HASH_DEL (element.target.GetHashCode());
-			element.timers = null;
-			element.target = null;
+//			element.timers = null;
+//			element.target = null;
 		}
 
 

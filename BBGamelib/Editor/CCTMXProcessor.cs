@@ -17,7 +17,7 @@ namespace BBGamelib{
 					continue;
 //				AssetDatabase.ImportAsset (asset, ImportAssetOptions.ForceUpdate);
 				string textureBase = asset.Replace(Path.GetFileName(asset), "");
-				string txtPath = textureBase + Path.GetFileNameWithoutExtension(asset) + "-tmx.txt";
+				string txtPath = textureBase + Path.GetFileNameWithoutExtension(asset) + ".txt";
 				//			dictionary.writeToFile (assetPath);
 				if (File.Exists (txtPath))
                     File.Delete (txtPath);

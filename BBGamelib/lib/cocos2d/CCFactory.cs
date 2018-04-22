@@ -17,18 +17,19 @@ namespace BBGamelib{
 	[AddComponentMenu("")]
 	public class CCFactory : MonoBehaviour
 	{
-		#region default categories
+		// ------------------------------------------------------------------------------
+		//  macros
+		// ------------------------------------------------------------------------------
 		public const string KEY_NODE = "CCFactory.NODE";
 		public const string KEY_SPRITE = "CCFactory.SPRITE";
-		public const string KEY_SPRITE_BOXCOLLIDER2D = "CCFactory.SPRITE_BOXCOLLIDER2D";
-		public const string KEY_SPRITE_CIRCLECOLLIDER2D = "CCFactory.SPRITE_CIRCLECOLLIDER2D";
 		public const string KEY_LABEL = "CCFactory.LABEL";
-		#endregion
-
-		#region singleton
+		public const string LAYER_DEFAULT = "Default";
+		
+		// ------------------------------------------------------------------------------
+		//  singleton
+		// ------------------------------------------------------------------------------
 		[SerializeField] [HideInInspector]private bool firstPassFlag=true;
 		static CCFactory _Instance=null;
-		//---------singleton------
 		public static CCFactory Instance{
 			get{
 				return _Instance;
@@ -36,6 +37,7 @@ namespace BBGamelib{
 		}
 		public virtual void Awake() {
 			if (Application.isPlaying) {
+				_materialPropertyBlock=new MaterialPropertyBlock();
 				if (_Instance != null && _Instance != this) {
 					Destroy (this.gameObject);
 					return;
@@ -49,29 +51,44 @@ namespace BBGamelib{
 				firstPassFlag = false;
 			}
 		}
-		#endregion
 		
-		#region properties
+		// ------------------------------------------------------------------------------
+		//  properties
+		// ------------------------------------------------------------------------------
 		[Serializable]
-		class Storage{
+		public class Storage{
 			[SerializeField] public string category;
 			[SerializeField] public string[] componentTypeNames;
 			[SerializeField] public List<CCFactoryGear> gears = new List<CCFactoryGear>(); 
 		}
-		[Serializable]  class DictionaryOfStringAndStorage : NSSerializableDictionary<string, Storage> {}
+		[Serializable]public  class DictionaryOfStringAndStorage : NSSerializableDictionary<string, Storage> {}
 		[SerializeField] DictionaryOfStringAndStorage _storages = new DictionaryOfStringAndStorage();
-		#endregion
-
+		/**
+		 public the storages for preloading
+		 example of how preload gear: 
+			splash scene:
+		 	gear.gameObject.SetActive (true); 
+		 	...
+		 	next frame:
+		 	gear.gameObject.SetActive (false); 
+		 */
+		public DictionaryOfStringAndStorage storages{ get { return _storages; } }
 		
-		#region public method
+		// shared proerties block of material
+		MaterialPropertyBlock _materialPropertyBlock;
+		public MaterialPropertyBlock materialPropertyBlock{ get { return _materialPropertyBlock; } }
+
+		// ------------------------------------------------------------------------------
+		//  public edit method
+		// ------------------------------------------------------------------------------
 		public void generateNodeGearsInEditMode(int num){
 			generateGearsInEditMode (KEY_NODE, null, num);
 		}
 		public void generateSpriteGearsInEditMode(int num){
-			generateGearsInEditMode (KEY_SPRITE, new Type[1]{typeof(SpriteRenderer)}, num);
+            generateGearsInEditMode (KEY_SPRITE, CCSprite.kGearTypes, num);
 		}
 		public void generateLabelGearsInEditMode(int num){
-			generateGearsInEditMode (KEY_LABEL, new Type[2]{typeof(MeshRenderer), typeof(TextMesh)}, num);
+            generateGearsInEditMode (KEY_LABEL, CCLabelTTF.kGearTypes, num);
 		}
 
 		public void generateGearsInEditMode(string category, Type[] componentTypes, int num){
@@ -89,24 +106,33 @@ namespace BBGamelib{
 			for(int i=0; i<num; i++){
 				CCFactoryGear gear = buildGear(componentTypes);
 				gear.gameObject.name = string.Format("{0}-{1}", category, i);
-				gear.gameObject.transform.parent = transform;
+				gear.gameObject.transform.SetParent(transform);
 				gear.gameObject.hideFlags = HideFlags.HideInHierarchy;
 				gear.gameObject.SetActive(false);
 				storage.gears.Add(gear);
 			}
 		}
-
+		
+		// ------------------------------------------------------------------------------
+		//  public runtime metod
+		// ------------------------------------------------------------------------------
 		public CCFactoryGear takeGear(string category){
 			Storage storage = getStorage (category, false);
 			if (storage!=null) {
-				if(storage.gears.Count>0){
-//					return storage.gears.Dequeue();
+				while(storage.gears.Count>0){
 					CCFactoryGear gear = storage.gears[0];
 					storage.gears.RemoveAt(0);
 					gear.gameObject.hideFlags = HideFlags.None;
 					gear.gameObject.SetActive(true);
-					return gear;
-				}else{
+					if (gear.gameObject.transform.childCount != 0) {
+						CCDebug.Warning("CCFactory try to take a not empty gear: {0}-{1}.", gear.gameObject, gear.gameObject.transform.GetChild(0));
+						DestroyObject(gear.gameObject);
+					}else{
+						return gear;
+					}
+				}
+				//no gear caches
+				{
 					Type[] componentTypes = new Type[storage.componentTypeNames.Length];
 					for(int i=0; i<componentTypes.Length; i++){
 						componentTypes[i] = Type.GetType(storage.componentTypeNames[i]);
@@ -122,6 +148,13 @@ namespace BBGamelib{
 
 
 		public bool recycleGear(string category, CCFactoryGear gear, bool constraint=false){
+			if (gear.gameObject.transform.childCount != 0) {
+				CCDebug.Warning("CCFactory try to recyle a not empty gear: {0}-{1}.", gear.gameObject, gear.gameObject.transform.GetChild(0));
+				DestroyObject(gear.gameObject);
+				return false;
+			}
+
+
 			Storage storage = getStorage (category, true);
 			if (storage.componentTypeNames == null) {
 				string[] componentTypeNames = new string[gear.components.Length];
@@ -145,7 +178,9 @@ namespace BBGamelib{
 					}
 				}
 			}
-			gear.gameObject.transform.parent = transform;
+
+			gear.gameObject.layer = LayerMask.NameToLayer ("Default");
+			gear.gameObject.transform.SetParent(this.transform);
 			gear.gameObject.transform.localEulerAngles = Vector3.zero;
 			gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			gear.gameObject.transform.localPosition = Vector3.zero;
@@ -153,11 +188,17 @@ namespace BBGamelib{
 			gear.gameObject.hideFlags = HideFlags.HideInHierarchy;
 			gear.gameObject.SetActive(false);
 			storage.gears.Add(gear);
+
+			if (gear.gameObject.transform.parent == null) {
+				NSUtils.Assert(gear.gameObject.transform.parent != null, "Recyle# set parent fail!");
+			}
+
 			return true;
 		}
-		#endregion
-
-		#region inner method
+		
+		// ------------------------------------------------------------------------------
+		//  private
+		// ------------------------------------------------------------------------------
 		CCFactoryGear buildGear(Type[] componentTypes){
 			CCFactoryGear gear = new CCFactoryGear();
 			
@@ -186,7 +227,6 @@ namespace BBGamelib{
 			}
 			return storage;
 		}
-		#endregion
 	}
 }
 

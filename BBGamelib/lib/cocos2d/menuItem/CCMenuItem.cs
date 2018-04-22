@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 
 namespace BBGamelib{
-	public delegate void CCMenuItemDelegate(System.Object obj);
+    public delegate void CCMenuItemDelegate(CCMenuItem obj);
 	/** CCMenuItem base class
 	 *
 	 *  Subclass CCMenuItem (or any subclass) to create your custom CCMenuItem objects.
@@ -32,7 +32,8 @@ namespace BBGamelib{
 		protected override void init ()
 		{
 			base.init ();
-			initWithBlock (null);
+            initWithBlock (null);
+            this.nameInHierarchy = "menuItem";
 		}
 
 		protected virtual void initWithBlock(CCMenuItemDelegate block){

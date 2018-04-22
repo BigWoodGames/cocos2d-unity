@@ -279,9 +279,10 @@ namespace BBGamelib{
 				if(_runningScene!=null)
 					_runningScene.visit();
 			}catch(Exception e){
-				CCDebug.Error(e.ToString());
+				CCDebug.Log(e.ToString());
 				if(_displayError){
 					_lastError = e;
+					throw e;
 				}else{
 					Application.Quit();
 				}
@@ -296,7 +297,9 @@ namespace BBGamelib{
 				_dt = 0;
 				_nextDeltaTimeZero = false;
 			} else {
-				_dt = Time.deltaTime;
+                //Time.smoothDeltaTime looks better than Time.deltaTime
+                _dt = Time.smoothDeltaTime;
+//              _dt = Time.deltaTime;
 //				_dt = _animationInterval;
 			}
 		}
@@ -319,8 +322,7 @@ namespace BBGamelib{
 					_view = value as CCGLView;
 					
 					// set size
-					_winSizeInPixels = _view.bounds.size;
-					CCDebug.Log("cocos2d: window size: {0}", winSize);
+                    resetWinSize();
 
 					((CCGLView)view).touchDelegate = _touchDispatcher;
 					_touchDispatcher.dispatchEvents = true;
@@ -330,30 +332,26 @@ namespace BBGamelib{
 		#endregion
 		
 		#region Director Scene Landscape
-//		public Vector2 convertToGL(Vector2 uiPoint)
-//		{
-//			Vector2 glSize = _view.bounds.size;
-//			uiPoint += glSize * 0.5f;
-//			return uiPoint;
-//		}
 		[Obsolete("Deprecated. Use touch.location instead.")]
 		public Vector2 convertTouchToGL(UITouch touch)
 		{
 			Vector2 uiPoint = touch.location;
 			return uiPoint;
 		}
-//		public Vector2 convertToUI(Vector2 glPoint)
-//		{	
-//			Vector2 glSize = _view.bounds.size;
-//			glPoint -= glSize * 0.5f;
-//			return glPoint;
-//		}
-
 		public Vector2 winSize
 		{
 			get{return _winSizeInPixels;}
-		}
+        }
 
+        //reset winsize when resolution changed
+        public void resetWinSize()
+        {
+            if (_view != null)
+            {
+                _winSizeInPixels = _view.bounds.size;
+                CCDebug.Log("cocos2d: window size: {0}", winSize);
+            }
+        }
 		#endregion
 		
 		#region Director Scene Management 
@@ -474,7 +472,7 @@ namespace BBGamelib{
 			_oldAnimationInterval = _animationInterval;
 			
 			// when paused, don't consume CPU
-			this.animationInterval=1/4.0f;
+//			this.animationInterval=1/4.0f;
 			
 //			[self willChangeValueForKey:@"isPaused"];
 			_isPaused = true;
@@ -535,7 +533,10 @@ namespace BBGamelib{
 			get{return _animationInterval;}
 			set{
 				_animationInterval = value;
-				Application.targetFrameRate = Mathf.RoundToInt(1.0f / _animationInterval);
+
+                //调低全局帧数会影响所有FPS，比如GUI
+//				Application.targetFrameRate = Mathf.RoundToInt(1.0f / _animationInterval);
+                Application.targetFrameRate = 60;
 				if(_displayLink!=null){
 					stopAnimation();
 					startAnimation();
@@ -560,12 +561,6 @@ namespace BBGamelib{
 		
 		// shows the statistics
 		void OnGUI(CADisplayLink sender){
-			//in case OnGui start before set scene
-			if(_runningScene!=null){
-				_runningScene.visitOnGUI();
-			}else{
-//				CCDebug.Log("cocos2d:CCDirector:OnGUI: runningScene is null :{0}", this.GetHashCode());
-			}
 			if (_displayStats) {
 				int w = Screen.width, h = Screen.height;
 				GUIStyle style = new GUIStyle();
@@ -588,11 +583,11 @@ namespace BBGamelib{
 				Rect rect = new Rect(0, 0, w, h);
 				string text = string.Format("{0}", _lastError);
 
-				DrawQuad(new Rect(0, 0, w, h/2), new Color32(0, 0, 0, 128) ); 
+                drawQuad(new Rect(0, 0, w, h/2), new Color32(0, 0, 0, 128) ); 
 				GUI.Label(rect, text, style);	
 			}
 		}
-		void DrawQuad(Rect position, Color color) {
+		void drawQuad(Rect position, Color color) {
 			Texture2D texture = new Texture2D(1, 1);
 			texture.SetPixel(0,0,color);
 			texture.Apply();

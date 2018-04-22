@@ -84,7 +84,9 @@ namespace BBGamelib{
 					UITouch uiTouch = new UITouch ();
 					uiTouch.fingerId = touch.fingerId;
 					uiTouch.phase = touch.phase;
-					uiTouch.location = Camera.main.ScreenToWorldPoint (touch.position) * PIXEL_PER_UNIT;
+                    Vector3 p = touch.position;
+					p.z = -Camera.main.transform.position.z;
+					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = touch.tapCount;
 					uiTouch.timestamp = DateTime.Now;
 					if (touch.phase == TouchPhase.Began) {
@@ -108,7 +110,9 @@ namespace BBGamelib{
 					UITouch uiTouch = new UITouch();
 					uiTouch.fingerId = UITouch.SINGLE_TOUCH_ID;
 					uiTouch.phase = TouchPhase.Began;
-					uiTouch.location = Camera.main.ScreenToWorldPoint(Input.mousePosition) * PIXEL_PER_UNIT;
+					Vector3 p = Input.mousePosition;
+					p.z = -Camera.main.transform.position.z;
+					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = 1;
 					uiTouch.timestamp = DateTime.Now;
 					
@@ -118,7 +122,9 @@ namespace BBGamelib{
 					UITouch uiTouch = new UITouch();
 					uiTouch.fingerId = UITouch.SINGLE_TOUCH_ID;
 					uiTouch.phase = TouchPhase.Ended;
-					uiTouch.location = Camera.main.ScreenToWorldPoint(Input.mousePosition) * PIXEL_PER_UNIT;
+					Vector3 p = Input.mousePosition;
+					p.z = -Camera.main.transform.position.z;
+					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = 1;
 					uiTouch.timestamp = DateTime.Now;
 					
@@ -128,7 +134,9 @@ namespace BBGamelib{
 					UITouch uiTouch = new UITouch();
 					uiTouch.fingerId = UITouch.SINGLE_TOUCH_ID;
 					uiTouch.phase = TouchPhase.Moved;
-					uiTouch.location = Camera.main.ScreenToWorldPoint(Input.mousePosition) * PIXEL_PER_UNIT;
+					Vector3 p = Input.mousePosition;
+					p.z = -Camera.main.transform.position.z;
+					uiTouch.location = Camera.main.ScreenToWorldPoint(p) * PIXEL_PER_UNIT;
 					uiTouch.tapCount = 1;
 					uiTouch.timestamp = DateTime.Now;
 					

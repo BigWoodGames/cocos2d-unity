@@ -233,7 +233,8 @@ namespace BBGamelib{
 			string ext = Path.GetExtension (file);
 			if(ext!=null && ext.Length>0)
 				file = file.Replace (ext, "");
-			CCSpriteFrame frame = new CCSpriteFrame (file);
+            Texture2D texture = Resources.Load<Texture2D> (file);
+            CCSpriteFrame frame = new CCSpriteFrame (texture, new Rect(Vector2.zero, new Vector2(texture.width, texture.height)));
 			addSpriteFrame (frame);
 		}
 	}

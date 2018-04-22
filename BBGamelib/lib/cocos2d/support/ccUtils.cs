@@ -155,5 +155,32 @@ namespace BBGamelib{
 			
 			GUI.Box( position, GUIContent.none, _staticRectStyle );
 		}
+
+		public static void SetRenderColor(Renderer renderer, Color tint, Color add){
+			Material m = renderer.sharedMaterial;
+			if (m != null) {
+				MaterialPropertyBlock block = CCFactory.Instance.materialPropertyBlock;
+				renderer.GetPropertyBlock (block);
+				if (m.HasProperty ("_Color")) {
+					block.SetColor ("_Color", tint);
+				}
+				if (m.HasProperty ("_AddColor")) {
+					block.SetColor ("_AddColor", add);
+				}
+				renderer.SetPropertyBlock (block);
+			}
+		}
+
+        public static void SetRenderValue(Renderer renderer, string key, int value){
+            Material m = renderer.sharedMaterial;
+            if (m != null) {
+                MaterialPropertyBlock block = CCFactory.Instance.materialPropertyBlock;
+                renderer.GetPropertyBlock (block);
+                if (m.HasProperty (key)) {
+                    block.SetFloat (key, value);
+                }
+                renderer.SetPropertyBlock (block);
+            }
+        }
 	}
 }

@@ -87,7 +87,7 @@ namespace BBGamelib{
 			bool added = false;
 			
 			for( utNode<tListEntry> elem = list.head; elem != null ; elem = elem.next ) {
-				if( priority < elem.obj.priority ) {
+				if( priority <= elem.obj.priority ) {
 					
 					if( elem == list.head )
 						list.DL_PREPEND(listElement);

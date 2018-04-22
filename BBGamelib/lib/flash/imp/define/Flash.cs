@@ -13,8 +13,8 @@ namespace BBGamelib.flash.imp{
 		public int frameRate;
 		public Vector2 frameSize;
 		public string prefix;
-		public Define[] chId_defs;
-		public Dictionary<string, Define> className_defs;
+		public TagDefine[] chId_defs;
+		public Dictionary<string, TagDefine> classNameDefs;
 		public readonly DisplayFactory displayFactory;
 
 		public Flash(string path, DisplayFactory aFactory){
@@ -57,30 +57,49 @@ namespace BBGamelib.flash.imp{
 			int maxcharacterId = Utils.ReadInt32 (data, cursor);
 			int definesCount = Utils.ReadInt32 (data, cursor);
 
-			chId_defs = new Define[maxcharacterId + 1];
-			className_defs = new Dictionary<string, Define> (definesCount/4);
+			chId_defs = new TagDefine[maxcharacterId + 1];
+			classNameDefs = new Dictionary<string, TagDefine> (definesCount/4);
 
 			for (int i=0; i<definesCount; i++) {
-				Define define = DefineFactory.ParseDefine(this, data, cursor);
+				TagDefine define = parseDefine(this, data, cursor);
 				
 				if(define!=null){
 					chId_defs[define.characterId] = define;
-					if(define.className!=null){
-						className_defs[define.className] = define;
+					if(define is TagDefine && (define as TagDefine).className!=null){
+						classNameDefs[(define as TagDefine).className] = define;
 					}
 				}
 			}
 			cursor.index = newIndex;
 		}
 
+		public TagDefine parseDefine(Flash flash, byte[] data, Cursor cursor){
+			//find nextIndex
+			int dataLength = Utils.ReadInt32 (data, cursor);
+			int nextIndex = cursor.index + dataLength;
+			
+			//parse
+			byte type = Utils.ReadByte(data, cursor);
+			TagDefine def = null;
+			if(type==TagDefine.DEF_TYPE_GRAPHIC){
+				def = new TagDefineGraphic(flash, data, cursor);
+			}else if(type==TagDefine.DEF_TYPE_SPRITE){
+				def = new TagDefineMovie(flash, data, cursor);
+			}
 
-		public Define getDefine(int characterId){
+			//nextIndex
+			cursor.index = nextIndex;
+			
+			return def;
+		}
+
+		public TagDefine getDefine(int characterId){
 			return chId_defs [characterId];
 		}
 
-		public Define getDefine(string className){
-			Define define;
-			className_defs.TryGetValue (className, out define);
+		public TagDefine getDefine(string className){
+			TagDefine define;
+			classNameDefs.TryGetValue (className, out define);
 			return define;
 		}
 
@@ -99,7 +118,7 @@ namespace BBGamelib.flash.imp{
 			int count = 0;
 			string defineString = "";
 			for(int i=0; i<chId_defs.Length; i++){
-				Define define = chId_defs[i];
+				TagDefine define = chId_defs[i];
 				if(define != null){
 					count ++;
 					defineString += define.trace(indent + 4);

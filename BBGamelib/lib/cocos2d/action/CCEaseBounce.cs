@@ -67,7 +67,7 @@ namespace BBGamelib{
 			float newT = t;
 			// prevents rounding errors
 			if (!FloatUtils.EQ(t , 0) && !FloatUtils.EQ( t , 1))
-				newT = 1 - bounceTime(1-t);
+				newT = bounceTime(t);
 			
 			_inner.update(newT);
 		}

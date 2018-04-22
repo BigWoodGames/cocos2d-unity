@@ -82,14 +82,18 @@ namespace BBGamelib{
 		}
 		
 		public void playBackgroundMusic(string filePath, bool loop=true){
-			stopBackgroundMusic ();
 			AudioClip audio = getAudioClip (filePath);
 			if(audio==null)
 				CCDebug.Warning ("cocos2d:SimpleAudioEngine: Audio {0} not found.", filePath);
 			else
-				playAudio (audio, _backgroundMusicSource, loop, _backgroundMusicVolume);
+                playBackgroundMusic (audio, loop);
 		}
 		
+        public void playBackgroundMusic(AudioClip audio, bool loop=true){
+            stopBackgroundMusic ();
+            playAudio (audio, _backgroundMusicSource, loop, _backgroundMusicVolume);
+        }
+
 		public void stopBackgroundMusic(){
 			_backgroundMusicSource.Stop ();
 			_backgroundMusicSource.clip = null;
@@ -113,11 +117,16 @@ namespace BBGamelib{
 				CCDebug.Warning ("cocos2d:SimpleAudioEngine: Audio {0} not found.", filePath);
 				return -1;
 			}else{
-				_currentSource = (_currentSource+1)%AUDIO_SOURCES_NUM;
-				playAudio (audio, _audioSources[_currentSource], false, _effectsVolume);
-				return _currentSource;
+                return playEffect(audio);
 			}
 		}
+
+        public int playEffect(AudioClip audio)
+        {
+            _currentSource = (_currentSource+1)%AUDIO_SOURCES_NUM;
+            playAudio (audio, _audioSources[_currentSource], false, _effectsVolume);
+            return _currentSource;
+        }
 		
 		public void stopEffect(int soundId){
 			if (soundId < _audioSources.Length) {

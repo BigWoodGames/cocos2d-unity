@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System;
 
 namespace BBGamelib{
 	public class CCLabelContent
@@ -11,7 +13,8 @@ namespace BBGamelib{
 		public MeshRenderer renderer{get{return gear.components[0] as MeshRenderer;}}
 		public TextMesh mesh{get{return gear.components[1] as TextMesh;}}
 		public Transform transform{get{return gameObject.transform;}}
-		
+		//unity font material
+		public Material defaultMaterial;
 		public CCLabelContent(){
 			gear = CCFactory.Instance.takeGear (CCFactory.KEY_LABEL);
 			gear.gameObject.name = "content";
@@ -20,6 +23,8 @@ namespace BBGamelib{
 			mesh.characterSize = 0.05f; 
 			mesh.anchor = TextAnchor.MiddleCenter;
 			mesh.alignment = TextAlignment.Center;
+			this.renderer.sortingLayerName = CCFactory.LAYER_DEFAULT;
+			this.defaultMaterial = this.renderer.material;
 		}
 	}
 
@@ -29,9 +34,13 @@ namespace BBGamelib{
 	 *
 	 * CCLabel objects are slow. Consider using CCLabelAtlas or CCLabelBMFont instead.
 	 */
-	[AddComponentMenu("")]
 	public class CCLabelTTF : CCNodeRGBA, CCLabelProtocol
 	{
+        public static Type[] kGearTypes = new Type[]
+        {
+            typeof(MeshRenderer),
+            typeof(TextMesh)
+        };
 		const float kFontSizeToPixel = 0.5f;
 		Vector2                       _dimensions;
 		CCTextAlignment              _hAlignment;
@@ -55,11 +64,7 @@ namespace BBGamelib{
 		Color32   _textFillColor;
 
 		CCLabelContent 		_content;
-		
-		// vertex coords, texture coords and color info
-		//		ccV3F_C4B_T2F_Quad _quad;
-		Color _quadColor;
-		
+
 		// opacity and RGB protocol
 		bool		_opacityModifyRGB;
 		
@@ -83,7 +88,8 @@ namespace BBGamelib{
 //			_gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			_content = new CCLabelContent ();
 			_content.gameObject.transform.parent = gameObject.transform;
-//			_content.renderer.sortingOrder = 1;
+            //			_content.renderer.sortingOrder = 1;
+            ccUtils.SetRenderColor (_content.renderer, Color.white, new Color32(0, 0, 0, 0));
 		}
 		public CCLabelTTF(string text, string fontName, float fontSize)
 		{
@@ -101,7 +107,6 @@ namespace BBGamelib{
 			_opacityModifyRGB = true;
 			_flipY = _flipX = false;
 			_anchorPoint =  new Vector2(0.5f, 0.5f);
-			_quadColor = new Color32 (255, 255, 255, 255);
 
 			_hAlignment = CCTextAlignment.Center;
 			_vAlignment = CCVerticalTextAlignment.Center;
@@ -113,6 +118,10 @@ namespace BBGamelib{
 			this.fontSize = fontSize;
 			this.text = text;
 		}
+
+		public CCLabelContent content{
+			get{ return _content; }
+        }
 
 		public string text{
 			get{return _text;}
@@ -234,21 +243,31 @@ namespace BBGamelib{
 		}
 
 		protected override void recycleGear ()
-		{
+        {
+            //reset default layer
+            CCFactory.Instance.materialPropertyBlock.Clear ();
+            _content.renderer.SetPropertyBlock (CCFactory.Instance.materialPropertyBlock);
+            _content.renderer.material = _content.defaultMaterial;
+            _content.renderer.gameObject.layer = LayerMask.NameToLayer(CCFactory.LAYER_DEFAULT);
+
+            CCFactory.Instance.recycleGear (CCFactory.KEY_LABEL, _content.gear);
 			base.recycleGear ();
-			CCFactory.Instance.recycleGear (CCFactory.KEY_LABEL, _content.gear);
 		}
 
 		// Helper
-		protected bool updateTexture()
-		{				
-			if (FloatUtils.EQ(_dimensions.x , 0) || FloatUtils.EQ(_dimensions.y , 0)) {
+		protected void updateTexture()
+		{			
+			if (string.IsNullOrEmpty (_text)) {
+				_content.mesh.text = _text;
+				return;
+			}
+			if (FloatUtils.EQ(_dimensions.x , 0)) {
 				_content.mesh.text = _text;
 				Bounds localBounds = getLocalbounds();
 				Vector2 textSize = ccUtils.UnitsToPixels (localBounds.size);
 				this.contentSize = textSize;
 			} else {
-				string finalText = "";
+				StringBuilder finalText = new StringBuilder();
 				string originalText = _text;
 				int preEmptyCharIndex = -1;
 				for(int i=1; i<=originalText.Length; i++){
@@ -258,9 +277,10 @@ namespace BBGamelib{
 					}
 					string tmpStr = originalText.Substring(0, i);
 					if(c == '\n'){
-						finalText += tmpStr;
+						finalText.Append(tmpStr);
 						originalText = originalText.Substring(i);
 						i = 0;
+						preEmptyCharIndex = -1;
 					}
 
 					_content.mesh.text = tmpStr;
@@ -268,21 +288,21 @@ namespace BBGamelib{
 					Vector2 csize = ccUtils.UnitsToPixels (localBounds.size);
 					if(FloatUtils.Big(csize.x , _dimensions.x)){
 						if(preEmptyCharIndex==-1)
-							tmpStr = originalText.Substring(0, i);
+							tmpStr = originalText.Substring(0, --i);
 						else{
 							tmpStr = originalText.Substring(0, preEmptyCharIndex);
 							i = preEmptyCharIndex + 1;
 							preEmptyCharIndex = -1;
 						}
-						finalText += tmpStr;
+						finalText.Append(tmpStr);
 						if(i<originalText.Length){
-							finalText += "\n";
+							finalText.Append("\n");
 							originalText = originalText.Substring(i);
 							i = 0;
 						}
 					}else if(i==originalText.Length){
 						tmpStr = originalText.Substring(0, i);
-						finalText += tmpStr;
+						finalText.Append(tmpStr);
 						break;
 					}
 
@@ -302,12 +322,12 @@ namespace BBGamelib{
 //						}
 //					}
 				}
-				_content.mesh.text = finalText;
-				this.contentSize = _dimensions;
+				_content.mesh.text = finalText.ToString();
+				Bounds bounds = getLocalbounds();
+				Vector2 textSize = ccUtils.UnitsToPixels (bounds.size);
+				this.contentSize = textSize;
 			}
 			_isContentDirty = true;
-			
-			return true;
 		}
 
 		protected override void draw ()
@@ -390,16 +410,13 @@ namespace BBGamelib{
 		#region CCLabelTTF - RGBA protocol
 		public void updateColor()
 		{
-			Color32 color4 = new Color32(_displayedColor.r, _displayedColor.g, _displayedColor.b, _displayedOpacity);
-			
 			// special opacity for premultiplied textures
-			if ( _opacityModifyRGB ) {
-				color4.r = (byte)(color4.r * _displayedOpacity/255.0f);
-				color4.g = (byte)(color4.g * _displayedOpacity/255.0f);
-				color4.b = (byte)(color4.b * _displayedOpacity/255.0f);
-			}
-			_quadColor = color4;
-			_content.mesh.color = _quadColor;
+			Color32 tint = _displayedColor.tint;
+			tint.a = _displayedOpacity.tint;
+			Color32 add = _displayedColor.add;
+			add.a = _displayedOpacity.add;
+			
+			ccUtils.SetRenderColor (_content.renderer, tint, add);
 		}
 		
 		public override Color32 color {
@@ -409,7 +426,7 @@ namespace BBGamelib{
 			}
 		}
 		
-		public override void updateDisplayedColor (Color32 parentColor)
+		public override void updateDisplayedColor (ColorTransform parentColor)
 		{
 			base.updateDisplayedColor (parentColor);
 			updateColor ();
@@ -431,7 +448,7 @@ namespace BBGamelib{
 			}
 		}
 		
-		public override void updateDisplayedOpacity (byte parentOpacity)
+		public override void updateDisplayedOpacity (OpacityTransform parentOpacity)
 		{
 			base.updateDisplayedOpacity (parentOpacity);
 			updateColor ();
@@ -439,9 +456,11 @@ namespace BBGamelib{
 		
 		#endregion
 
-		Bounds getLocalbounds(){
+		public Bounds getLocalbounds(){
 			Bounds bounds = _content.renderer.bounds;
-			bounds = convertToNodeSpace (bounds);
+
+			//Fixed: convert bounds to content space
+			bounds = cc3Utils.ConvertToLocalBounds(_content.transform, bounds);
 			return bounds;
 		}
 	}

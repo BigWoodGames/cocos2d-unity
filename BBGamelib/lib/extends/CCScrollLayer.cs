@@ -14,7 +14,7 @@ namespace BBGamelib{
 		Sliding,
 	}
 
-	public class CCScrollLayer : CCLayer {
+	public class CCScrollLayer : CCLayerRGBA {
 		
 		CCScrollLayerDelegate delegate__;
 		

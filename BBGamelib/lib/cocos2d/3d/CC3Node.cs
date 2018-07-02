@@ -152,7 +152,7 @@ namespace BBGamelib{
 		public virtual Vector3 convertToParentSpace3d(Vector3 pos3dInLocal){
 			Vector3 pos3dInWorld = convertToWorldSpace3d (pos3dInLocal);
 			
-			Vector3 pos3dInParent = Vector3.zero;
+			Vector3 pos3dInParent =Vector3.zero;
 			if (this.parent is CC3Node) {
 				pos3dInParent = (this.parent as CC3Node).convertToNodeSpace3d (pos3dInWorld);
 			} else {
@@ -184,7 +184,7 @@ namespace BBGamelib{
 
 				//rotation
 				transform.localPosition = pos;
-				transform.localEulerAngles = Vector3.zero;
+				transform.localEulerAngles =Vector3.zero;
 				switch(_rotationSortingOrder){
 				case kRotationSortingOrder.XYZ:
 					transform.Rotate(-_rotationX, 0, 0);
@@ -226,9 +226,9 @@ namespace BBGamelib{
 
 		protected override void recycleGear ()
 		{
-			this.transform.position = Vector3.zero;
+			this.transform.position =Vector3.zero;
 			this.transform.localScale = new Vector3 (1, 1, 1);
-			this.transform.eulerAngles = Vector3.zero;
+			this.transform.eulerAngles =Vector3.zero;
 			base.recycleGear ();
 		}
 	}

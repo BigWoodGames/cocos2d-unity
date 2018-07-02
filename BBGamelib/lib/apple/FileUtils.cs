@@ -16,10 +16,11 @@ namespace BBGamelib{
 		
 		public static string ReadTextFileFromResources(string path, ZipDelegate zip=null){
 			string result = null;
-			if (Application.isPlaying) {
-				NSUtils.Assert (path.EndsWith (".txt"), "FileUtils: Text file in Resources folder must be '*.txt' format!");
-				string ext = Path.GetExtension(path);
-				path = path.Replace (ext, "");
+            if (Application.isPlaying) {
+                string ext = Path.GetExtension(path);
+                NSUtils.Assert(string.IsNullOrEmpty(ext) || ext == ".txt" || ext == ".json", "FileUtils: Text file in Resources folder must be '*.txt', '*.json' or none extends format!");
+                if(!string.IsNullOrEmpty(ext))
+				    path = path.Replace (ext, "");
 				TextAsset txt = Resources.Load<TextAsset> (path);
 				NSUtils.Assert (txt!=null, "No file found at {0}", path);
 				result = txt.text;

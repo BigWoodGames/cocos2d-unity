@@ -73,7 +73,8 @@ Shader "BBGamelib/CCSprite" {
 					fixed4 frag(v2f IN) : SV_Target
 					{
 						fixed4 c = SampleSpriteTexture (IN.texcoord) * IN.color * _Color + _AddColor;
-						c.rgb *= c.a;
+						//will set opacityModifyRGB in CCSprite
+//						c.rgb *= c.a;
 						return c;
 					}
 				ENDCG

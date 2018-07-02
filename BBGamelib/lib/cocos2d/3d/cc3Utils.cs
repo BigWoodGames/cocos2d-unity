@@ -27,7 +27,7 @@ namespace BBGamelib{
 			var point6 = transform.InverseTransformPoint(new Vector3(max.x, min.y, max.z));
 			var point7 = transform.InverseTransformPoint(new Vector3(max.x, max.y, min.z));
 			var point8 = transform.InverseTransformPoint(new Vector3(max.x, max.y, max.z));
-			var result = new Bounds(center, Vector3.zero);
+			var result = new Bounds(center,Vector3.zero);
 			result.Encapsulate(point1);
 			result.Encapsulate(point2);
 			result.Encapsulate(point3);

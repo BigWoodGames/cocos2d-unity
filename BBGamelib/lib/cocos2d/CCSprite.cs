@@ -26,6 +26,7 @@ namespace BBGamelib
         bool _meshDirty;
         bool _clippingEnabled;
         Rect _clippingRect;
+        bool _opacityModifyRGB;
 
         public CCSprite(string imagedName)
         {
@@ -69,6 +70,7 @@ namespace BBGamelib
         public void initWithSpriteFrame(CCSpriteFrame spriteFrame)
         { 
             _flipY = _flipX = false;
+            _opacityModifyRGB = true;
             _anchorPoint = new Vector2(0.5f, 0.5f);
             this.displayedFrame = spriteFrame;
         }
@@ -204,6 +206,13 @@ namespace BBGamelib
             tint.a = _displayedOpacity.tint;
             Color32 add = _displayedColor.add;
             add.a = _displayedOpacity.add;
+
+            if (_opacityModifyRGB)
+            {
+                tint.r = (byte)(tint.r * tint.a / 255f);
+                tint.g = (byte)(tint.g * tint.a / 255f);
+                tint.b = (byte)(tint.b * tint.a / 255f);
+            }
             ccUtils.SetRenderColor (this.meshRender, tint, add);
         }
 
@@ -381,6 +390,22 @@ namespace BBGamelib
                 rotation.z += 180;
             }
             return rotation;
+        }
+
+        public override bool opacityModifyRGB
+        {
+            get
+            {
+                return _opacityModifyRGB;
+            }
+            set
+            {
+                if (value != _opacityModifyRGB)
+                {
+                    _opacityModifyRGB = value;
+                    updateColor();
+                }
+            }
         }
     }
 }

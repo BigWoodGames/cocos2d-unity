@@ -46,7 +46,7 @@ namespace BBGamelib{
 				}
 			} 
 			if (firstPassFlag) {
-				gameObject.transform.position = Vector3.zero;
+				gameObject.transform.position =Vector3.zero;
 				gameObject.name = "CCFactory";
 				firstPassFlag = false;
 			}
@@ -181,9 +181,9 @@ namespace BBGamelib{
 
 			gear.gameObject.layer = LayerMask.NameToLayer ("Default");
 			gear.gameObject.transform.SetParent(this.transform);
-			gear.gameObject.transform.localEulerAngles = Vector3.zero;
+			gear.gameObject.transform.localEulerAngles =Vector3.zero;
 			gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
-			gear.gameObject.transform.localPosition = Vector3.zero;
+			gear.gameObject.transform.localPosition =Vector3.zero;
 			gear.gameObject.name = string.Format("{0}-{1}", category, storage.gears.Count);
 			gear.gameObject.hideFlags = HideFlags.HideInHierarchy;
 			gear.gameObject.SetActive(false);

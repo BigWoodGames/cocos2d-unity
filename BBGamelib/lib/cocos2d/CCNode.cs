@@ -107,7 +107,7 @@ namespace BBGamelib
 		protected virtual void initWithGear(CCFactoryGear gear){
 			_gear = gear;
 			_gear.gameObject.name = "node";
-			_gear.gameObject.transform.localPosition = Vector3.zero;
+			_gear.gameObject.transform.localPosition =Vector3.zero;
 //			_gear.gameObject.transform.localScale = new Vector3 (1, 1, 1);
 			_isRunning = false;
 			
@@ -704,7 +704,7 @@ namespace BBGamelib
 				
 				//rotation
                 Vector3 rotation = calculateRotation();
-                transform.localEulerAngles = Vector3.zero;
+                transform.localEulerAngles =Vector3.zero;
                 transform.Rotate(rotation.x, 0, 0);
                 transform.Rotate(0, rotation.y, 0);
                 transform.Rotate(0, 0, rotation.z);

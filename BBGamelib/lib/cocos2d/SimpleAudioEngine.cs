@@ -40,7 +40,7 @@ namespace BBGamelib{
 				_currentSource = 0;
 			} 
 			if (firstPassFlag) {
-				gameObject.transform.position = Vector3.zero;
+				gameObject.transform.position =Vector3.zero;
 				gameObject.name = "AudioEngine";
 				firstPassFlag = false;
 				

@@ -33,7 +33,7 @@ namespace BBGamelib{
             }
             if (firstPassFlag)
             {
-                gameObject.transform.position = Vector3.zero;
+                gameObject.transform.position =Vector3.zero;
                 gameObject.name = "CC3SpriteFactory";
                 firstPassFlag = false;
             }
@@ -147,7 +147,7 @@ namespace BBGamelib{
             {
                 GameObject obj = fbxs [0];
                 fbxs.RemoveAt(0);
-                obj.transform.localPosition = Vector3.zero;
+                obj.transform.localPosition =Vector3.zero;
                 obj.SetActive(true);
                 return obj;
             } else if (createIfNeed)

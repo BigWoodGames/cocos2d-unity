@@ -45,7 +45,7 @@ namespace BBGamelib{
 
 			if (firstPassFlag) {
 				//init
-				gameObject.transform.position = Vector3.zero;
+				gameObject.transform.position =Vector3.zero;
 				gameObject.name = "AppDelegate";
 
 				//window

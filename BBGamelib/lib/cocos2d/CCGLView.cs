@@ -35,7 +35,7 @@ namespace BBGamelib{
 				}
 			} 
 			if (firstPassFlag) {
-				gameObject.transform.position = Vector3.zero;
+				gameObject.transform.position =Vector3.zero;
 				gameObject.name = "CCGLView";
 				firstPassFlag = false;
 			}

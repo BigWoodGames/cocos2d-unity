@@ -56,7 +56,7 @@ namespace BBGamelib{
             _prefabObj = obj;
             NSUtils.Assert (_prefabObj != null, "CC3Prefab : Prefab not found at path {0}.", path);
             _prefabObj.transform.parent = this.transform;
-            _prefabObj.transform.localPosition = Vector3.zero;
+            _prefabObj.transform.localPosition =Vector3.zero;
 
             Renderer[] rs = this.renderers;
             for (int i=0; i<rs.Length; i++) {
@@ -64,7 +64,7 @@ namespace BBGamelib{
             }
 
             _isBoundsDirty = true;
-            _bounds = new Bounds (Vector3.zero, Vector3.zero);
+            _bounds = new Bounds (Vector3.zero,Vector3.zero);
             _cleanupMode = kCleanupMode.Recycle;
         }
 		

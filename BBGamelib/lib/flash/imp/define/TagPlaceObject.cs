@@ -125,8 +125,8 @@ namespace BBGamelib.flash.imp
 
                 display.position = Vector2.zero;
                 display.rotation = 0;
-                display.scaleX = display.define.preScale;
-                display.scaleY = display.define.preScale;
+                display.scaleX = 1;//display.define.preScale;
+                display.scaleY = 1;//display.define.preScale;
                 display.zOrder = depth;
                 if (display.hasUserVisible)
                 {
